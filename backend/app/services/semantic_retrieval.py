@@ -90,6 +90,16 @@ def semantic_scores(
     intent: TravelIntent,
     original_query: str = "",
 ) -> dict[tuple[str, str], float]:
+    """Return similarity scores. Uses real sentence embeddings if cache exists, else TF-IDF."""
+    try:
+        from app.services.embedding_store import get_semantic_scores
+        scores = get_semantic_scores(places, intent, original_query)
+        if scores:
+            return scores
+    except Exception:
+        pass
+
+    # TF-IDF fallback (used when embedding cache hasn't been built yet)
     text = query_text(intent, original_query)
     return {
         (place.get("name", "").lower(), place.get("city", "").lower()): cosine_similarity(

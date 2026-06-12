@@ -13,7 +13,7 @@ import {
   Send,
 } from "lucide-react";
 
-import type { ChatResponse, Place } from "./types";
+import type { AlternativePlace, ChatResponse, Place } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api";
 
@@ -123,6 +123,7 @@ export default function App() {
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
   const [selectedMapDayIndex, setSelectedMapDayIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Planning...");
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -150,6 +151,7 @@ export default function App() {
     if (!trimmedMessage) return;
 
     setLoading(true);
+    setLoadingMessage("Analyzing your request...");
     setError(null);
     setMessages((current) => [
       ...current,
@@ -158,7 +160,7 @@ export default function App() {
     setMessage("");
 
     try {
-      const response = await fetch(`${API_BASE}/chat`, {
+      const response = await fetch(`${API_BASE}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -175,15 +177,45 @@ export default function App() {
         throw new Error("Unable to generate itinerary.");
       }
 
-      const data: ChatResponse = await response.json();
-      setSessionId(data.session_id || sessionId);
-      setResult(data);
-      setSelectedStopIndex(0);
-      setSelectedMapDayIndex(0);
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: data.assistant_message },
-      ]);
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEvent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            const raw = line.slice(6).trim();
+            if (!raw) continue;
+            const data = JSON.parse(raw);
+            if (currentEvent === "status") {
+              setLoadingMessage(data.message);
+            } else if (currentEvent === "result") {
+              const chatData = data as ChatResponse;
+              setSessionId(chatData.session_id || sessionId);
+              setResult(chatData);
+              setSelectedStopIndex(0);
+              setSelectedMapDayIndex(0);
+              setMessages((current) => [
+                ...current,
+                { role: "assistant", content: chatData.assistant_message },
+              ]);
+            } else if (currentEvent === "error") {
+              setError(data.message ?? "Unexpected error occurred.");
+            }
+            currentEvent = "";
+          }
+        }
+      }
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -203,6 +235,7 @@ export default function App() {
     setSelectedStopIndex(0);
     setSelectedMapDayIndex(0);
     setError(null);
+    setLoadingMessage("Planning...");
   }
 
   async function handleExportPdf() {
@@ -294,7 +327,7 @@ export default function App() {
               {loading ? (
                 <div className="message assistant loading-line">
                   <LoaderCircle size={16} className="spin" />
-                  Planning
+                  {loadingMessage}
                 </div>
               ) : null}
               <div ref={messagesEndRef} />
@@ -362,6 +395,10 @@ export default function App() {
                   </div>
 
                   <EvidenceList evidence={result.evidence} />
+
+                  {result.alternative_options?.length > 0 && (
+                    <AlternativesList alternatives={result.alternative_options} />
+                  )}
                 </>
               ) : (
                 <EmptyState
@@ -698,6 +735,38 @@ function PlaceStatus({ stop, compact = false }: { stop: Place; compact?: boolean
       <small>{price}</small>
       <small>{stop.open_status_label || "Opening hours need map-source refresh"}</small>
     </span>
+  );
+}
+
+function AlternativesList({ alternatives }: { alternatives: AlternativePlace[] }) {
+  return (
+    <div className="alternatives-list" aria-label="Alternative places">
+      <strong>Alternatives to swap in</strong>
+      {alternatives.map((alt) => (
+        <div className="alt-card" key={`${alt.name}-${alt.city}`}>
+          <span>
+            <strong>{alt.name}</strong>
+            <small>
+              {alt.city}
+              {alt.category ? ` / ${alt.category}` : ""}
+              {alt.tourist_trap_risk ? ` · ${alt.tourist_trap_risk} risk` : ""}
+            </small>
+            {alt.reason && <em>{alt.reason}</em>}
+          </span>
+          {alt.source_url ? (
+            <a
+              className="round-button"
+              href={alt.source_url}
+              target="_blank"
+              rel="noreferrer"
+              title="View source"
+            >
+              <ExternalLink size={15} />
+            </a>
+          ) : null}
+        </div>
+      ))}
+    </div>
   );
 }
 

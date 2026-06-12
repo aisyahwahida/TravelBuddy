@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEFAULT_LUXIA_BASE_URL = "https://bridge.luxiacloud.com/luxia/v1/chat"
-DEFAULT_LUXIA_MODEL = "luxia3-llm-8b-0731"
+DEFAULT_LUXIA_MODEL = "luxia3-llm-32b-0731"
 
 
 class LuxiaClient:

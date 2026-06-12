@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import (
+    eval,
     export,
     google_places,
     health,
@@ -29,6 +30,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(travel.router, prefix="/api")
+app.include_router(eval.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
 app.include_router(reddit.router, prefix="/api")
 app.include_router(google_places.router, prefix="/api")

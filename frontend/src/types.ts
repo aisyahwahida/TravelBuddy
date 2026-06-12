@@ -30,6 +30,18 @@ export type Place = {
   confidence: number;
 };
 
+export type AlternativePlace = {
+  name: string;
+  category: string;
+  city: string;
+  reason: string;
+  local_tip: string;
+  tourist_trap_risk: string;
+  source_url: string;
+  latitude: number;
+  longitude: number;
+};
+
 export type TravelIntent = {
   destination: string;
   duration_days: number;
@@ -72,4 +84,5 @@ export type ChatResponse = {
   itinerary: Itinerary;
   session_id: string;
   evidence: EvidenceItem[];
+  alternative_options: AlternativePlace[];
 };

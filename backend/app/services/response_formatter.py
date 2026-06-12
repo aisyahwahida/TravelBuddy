@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.schemas.travel import Itinerary, Place, TravelIntent
+from app.schemas.travel import AlternativePlace, Itinerary, Place, TravelIntent
 
 
 def _cost_hint(place: Place) -> str:
@@ -51,8 +51,18 @@ def build_assistant_message(
     ).strip()
 
 
-def build_alternative_options(places: list[Place]) -> list[str]:
+def build_alternative_options(places: list[Place]) -> list[AlternativePlace]:
     return [
-        f"{place.name} ({place.category}, {place.city})"
+        AlternativePlace(
+            name=place.name,
+            category=place.category,
+            city=place.city,
+            reason=place.reason,
+            local_tip=place.local_tip,
+            tourist_trap_risk=place.tourist_trap_risk,
+            source_url=place.source_url,
+            latitude=place.latitude,
+            longitude=place.longitude,
+        )
         for place in places[4:10]
     ]

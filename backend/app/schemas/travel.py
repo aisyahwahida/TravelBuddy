@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Place(BaseModel):
@@ -78,6 +78,18 @@ class ChatRequest(BaseModel):
     session_id: str = ""
 
 
+class AlternativePlace(BaseModel):
+    name: str
+    category: str = ""
+    city: str = ""
+    reason: str = ""
+    local_tip: str = ""
+    tourist_trap_risk: str = ""
+    source_url: str = ""
+    latitude: float = 0.0
+    longitude: float = 0.0
+
+
 class EvidenceItem(BaseModel):
     place_name: str
     source_type: str
@@ -92,8 +104,23 @@ class ChatResponse(BaseModel):
     itinerary: Itinerary
     session_id: str = ""
     evidence: list[EvidenceItem] = Field(default_factory=list)
-    alternative_options: list[str] = Field(default_factory=list)
+    alternative_options: list[AlternativePlace] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
+
+    @field_validator("alternative_options", mode="before")
+    @classmethod
+    def coerce_alternatives(cls, v: object) -> list:
+        if not isinstance(v, list):
+            return []
+        result = []
+        for item in v:
+            if isinstance(item, str):
+                result.append({"name": item})
+            elif isinstance(item, dict):
+                result.append(item)
+            else:
+                result.append(item)
+        return result
 
 
 class ExportRequest(BaseModel):
