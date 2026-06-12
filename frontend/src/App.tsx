@@ -7,7 +7,6 @@ import {
   Download,
   ExternalLink,
   Footprints,
-  GripVertical,
   History,
   LoaderCircle,
   MapPin,
@@ -736,7 +735,6 @@ export default function App() {
                                 }
                               }}
                             >
-                              <GripVertical size={13} className="stop-drag-handle" />
                               <span className="stop-num">{stopIndex + 1}</span>
                               <PlacePhoto photoName={stop.photo_name} alt={stop.name} className="stop-img" />
                               <span className="stop-body">

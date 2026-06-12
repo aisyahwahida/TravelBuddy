@@ -363,12 +363,8 @@ textarea { font-family: inherit; }
   background: var(--green-soft);
 }
 .stop.stop-dragging { opacity: .4; }
-.stop-drag-handle {
-  flex: 0 0 auto; color: var(--ink-4);
-  cursor: grab; transition: color .15s;
-}
-.stop:hover .stop-drag-handle { color: var(--ink-3); }
-.stop-drag-handle:active { cursor: grabbing; }
+.stop[draggable] .stop-num { cursor: grab; }
+.stop[draggable]:active .stop-num { cursor: grabbing; }
 .alt[draggable] { cursor: grab; }
 .alt[draggable]:active { cursor: grabbing; opacity: .75; }
 .alt-drag-handle { cursor: inherit; }
