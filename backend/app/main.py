@@ -20,6 +20,17 @@ app = FastAPI(
     description="AI travel buddy backend focused on local-style recommendations in France.",
 )
 
+
+@app.on_event("startup")
+async def _prewarm() -> None:
+    """Load the embedding model and cache before the first request hits."""
+    try:
+        from app.services.embedding_store import _get_cache, _get_model
+        _get_model()
+        _get_cache()
+    except Exception:
+        pass
+
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"^http://(localhost|127\.0\.0\.1|\[::1\]):\d+$",

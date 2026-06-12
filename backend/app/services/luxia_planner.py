@@ -5,6 +5,53 @@ from app.schemas.travel import ChatRequest, ChatResponse, Itinerary, Place, Trav
 from app.services.luxia_client import LuxiaClient, extract_json_object
 from app.services.prompt_templates import template_guidance
 
+# Fields the LLM actually needs to make planning decisions.
+# Everything else (ratings, hours, map URLs, google data) gets merged back
+# after the response — no point paying LLM tokens to copy-paste them.
+_PLANNING_FIELDS = {
+    "name", "city", "neighborhood", "category", "reason", "local_tip",
+    "tourist_trap_risk", "best_time", "estimated_duration_minutes",
+    "latitude", "longitude", "tags", "source_type", "source_url",
+    "source_title", "price_label",
+}
+
+
+def _slim(place: Place) -> dict:
+    return {k: v for k, v in place.model_dump().items() if k in _PLANNING_FIELDS}
+
+
+def _merge_metadata(response: ChatResponse, candidates: list[Place]) -> ChatResponse:
+    """Restore metadata fields stripped before sending to LLM."""
+    lookup: dict[tuple[str, str], Place] = {
+        (p.name.lower(), p.city.lower()): p for p in candidates
+    }
+
+    _META = {
+        "map_source", "map_url", "google_maps_url", "google_rating",
+        "google_user_rating_count", "google_price_level", "google_price_label",
+        "business_status", "opening_hours", "open_now", "open_status_label",
+        "address", "confidence",
+    }
+
+    def merge(stop: Place) -> Place:
+        original = lookup.get((stop.name.lower(), stop.city.lower()))
+        if original is None:
+            return stop
+        updates = {f: getattr(original, f) for f in _META}
+        if not stop.price_label and original.price_label:
+            updates["price_label"] = original.price_label
+        return stop.model_copy(update=updates)
+
+    merged_stops = [merge(s) for s in response.itinerary.stops]
+    merged_days = [
+        day.model_copy(update={"stops": [merge(s) for s in day.stops]})
+        for day in response.itinerary.days
+    ]
+    new_itinerary = response.itinerary.model_copy(
+        update={"stops": merged_stops, "days": merged_days}
+    )
+    return response.model_copy(update={"itinerary": new_itinerary})
+
 _FAST_MODEL = "luxia3-llm-8b-0731"
 _SMART_MODEL = "luxia3-llm-32b-0731"
 
@@ -57,14 +104,12 @@ class LuxiaTravelPlanner:
         if not self.client.is_configured:
             raise RuntimeError("LUXIA_API_KEY is not configured.")
 
-        schema_hint = ChatResponse.model_json_schema()
         payload = {
             "message": request.message,
-            "history": request.history[-8:],
+            "history": request.history[-4:],
             "initial_intent": intent.model_dump(),
             "request_type_guidance": template_guidance(intent),
-            "candidate_places": [place.model_dump() for place in candidates],
-            "required_schema": schema_hint,
+            "candidate_places": [_slim(p) for p in candidates],
         }
         if previous_itinerary is not None:
             payload["previous_itinerary"] = previous_itinerary.model_dump()
@@ -87,4 +132,5 @@ class LuxiaTravelPlanner:
             max_tokens=max_tokens,
             model_override=model,
         )
-        return ChatResponse.model_validate(extract_json_object(raw_response))
+        response = ChatResponse.model_validate(extract_json_object(raw_response))
+        return _merge_metadata(response, candidates)
