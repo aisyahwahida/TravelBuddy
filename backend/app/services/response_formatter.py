@@ -51,7 +51,12 @@ def build_assistant_message(
     ).strip()
 
 
-def build_alternative_options(places: list[Place]) -> list[AlternativePlace]:
+def build_alternative_options(
+    places: list[Place],
+    used_names: set[str] | None = None,
+) -> list[AlternativePlace]:
+    excluded = {name.lower() for name in (used_names or set())}
+    candidates = [p for p in places if p.name.lower() not in excluded]
     return [
         AlternativePlace(
             name=place.name,
@@ -64,5 +69,5 @@ def build_alternative_options(places: list[Place]) -> list[AlternativePlace]:
             latitude=place.latitude,
             longitude=place.longitude,
         )
-        for place in places[4:10]
+        for place in candidates[:6]
     ]

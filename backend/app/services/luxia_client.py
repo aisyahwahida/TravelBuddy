@@ -26,6 +26,7 @@ class LuxiaClient:
         messages: list[dict[str, str]],
         temperature: float = 0.0,
         max_tokens: int = 1600,
+        model_override: str | None = None,
     ) -> str:
         if not self.api_key:
             raise ValueError("LUXIA_API_KEY is empty. Set it in your .env or environment.")
@@ -35,7 +36,7 @@ class LuxiaClient:
             "Content-Type": "application/json",
         }
         payload: dict[str, Any] = {
-            "model": self.model,
+            "model": model_override or self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,

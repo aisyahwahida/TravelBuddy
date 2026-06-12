@@ -149,7 +149,8 @@ class TravelOrchestrator:
             response = _apply_day_normalization(response)
             response.evidence = build_evidence(response.itinerary.stops)
             response.assumptions = response.extracted_intent.assumptions
-            response.alternative_options = build_alternative_options(places)
+            used = {stop.name for stop in response.itinerary.stops}
+            response.alternative_options = build_alternative_options(places, used)
             if response.extracted_intent.clarification_question:
                 response.assistant_message = (
                     f"{response.assistant_message}\n\n"
@@ -166,7 +167,9 @@ class TravelOrchestrator:
                 session_id=session_id,
                 evidence=build_evidence(itinerary.stops),
                 assumptions=intent.assumptions,
-                alternative_options=build_alternative_options(places),
+                alternative_options=build_alternative_options(
+                    places, {stop.name for stop in itinerary.stops}
+                ),
             )
 
     # ── Top-level entry point (regular /api/chat endpoint) ──

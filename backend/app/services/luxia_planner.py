@@ -1,8 +1,27 @@
 import json
+import os
 
 from app.schemas.travel import ChatRequest, ChatResponse, Itinerary, Place, TravelIntent
 from app.services.luxia_client import LuxiaClient, extract_json_object
 from app.services.prompt_templates import template_guidance
+
+_FAST_MODEL = "luxia3-llm-8b-0731"
+_SMART_MODEL = "luxia3-llm-32b-0731"
+
+
+def _select_model(intent: TravelIntent) -> str:
+    """Use the fast 8B model for simple 1-day plans; 32B for everything complex."""
+    if intent.duration_days >= 2:
+        return _SMART_MODEL
+    complex_intents = {"romantic_plan", "rainy_day_plan", "family_trip", "nightlife_plan"}
+    if complex_intents.intersection(set(intent.request_intents)):
+        return _SMART_MODEL
+    return _FAST_MODEL
+
+
+def _max_tokens_for(intent: TravelIntent) -> int:
+    """Scale token budget with trip length to avoid paying for capacity we don't need."""
+    return min(3500, max(1800, intent.duration_days * 1200))
 
 _BASE_SYSTEM = (
     "You are TravelBuddy France, a practical travel-planning assistant. "
@@ -56,12 +75,16 @@ class LuxiaTravelPlanner:
             else _BASE_SYSTEM
         )
 
+        model = _select_model(intent)
+        max_tokens = _max_tokens_for(intent)
+
         raw_response = self.client.chat(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": json.dumps(payload)},
             ],
             temperature=0.0,
-            max_tokens=3500,
+            max_tokens=max_tokens,
+            model_override=model,
         )
         return ChatResponse.model_validate(extract_json_object(raw_response))
