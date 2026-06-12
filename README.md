@@ -143,9 +143,72 @@ App URL:
 
 - `http://127.0.0.1:5173`
 
+## AWS Deployment (Academy Learner Lab)
+
+The production deployment runs on:
+
+| Component | Service | Address |
+|-----------|---------|---------|
+| Frontend  | S3 static website | `http://travelbuddy-frontend-705715.s3-website-us-east-1.amazonaws.com` |
+| Backend   | EC2 t3.small (Amazon Linux 2023) | `http://44.206.85.114:8000` |
+| Sessions  | DynamoDB table `travelbuddy-sessions` | us-east-1 |
+
+### Starting a new lab session
+
+Each time you start the AWS Academy Learner Lab the credentials rotate. You need to push the new credentials to EC2 so DynamoDB keeps working.
+
+**Step 1 — get credentials from the Academy lab page** (AccessKey + SecretKey shown when the lab is running).
+
+**Step 2 — open your Mac terminal** and run:
+
+```bash
+ssh -i /tmp/travelbuddy-key.pem ec2-user@44.206.85.114
+bash ~/refresh_creds.sh <NewAccessKey> <NewSecretKey>
+```
+
+That updates `/home/ec2-user/backend/.aws_env` and restarts the backend service automatically.
+
+> **If `/tmp/travelbuddy-key.pem` is missing** (Mac rebooted), re-download the key from the Academy lab page and save it to `/tmp/travelbuddy-key.pem`, then run `chmod 400 /tmp/travelbuddy-key.pem`.
+
+If you skip the credential refresh the backend still works — it falls back to local JSON file sessions on EC2. DynamoDB just won't receive new session data until credentials are refreshed.
+
+### Deploying backend changes
+
+```bash
+# From the repo root on your Mac:
+cd backend
+zip -r /tmp/backend_v2.zip app requirements.txt -x "app/__pycache__/*" "app/**/__pycache__/*" "app/data/embedding_cache.pkl"
+
+AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 cp /tmp/backend_v2.zip s3://travelbuddy-frontend-705715/deploys/backend_v2.zip
+
+# Then on EC2:
+ssh -i /tmp/travelbuddy-key.pem ec2-user@44.206.85.114
+aws s3 cp s3://travelbuddy-frontend-705715/deploys/backend_v2.zip ~/backend_v2.zip
+sudo systemctl stop travelbuddy
+cd ~ && rm -rf backend_new && mkdir backend_new && unzip -q backend_v2.zip -d backend_new
+rm -rf backend_old && mv backend backend_old && mv backend_new backend
+sudo chown -R ec2-user:ec2-user ~/backend
+sudo systemctl start travelbuddy
+```
+
+### Deploying frontend changes
+
+```bash
+# From frontend/:
+npm run build
+
+AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 sync dist/ s3://travelbuddy-frontend-705715/ --delete \
+  --cache-control "public, max-age=31536000, immutable" --exclude "*.html"
+
+AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 cp dist/index.html s3://travelbuddy-frontend-705715/index.html \
+  --cache-control "no-cache, no-store, must-revalidate"
+```
+
 ## Next Integrations
 
 - Add embeddings + vector search for a larger recommendation base
 - Add a Google Maps JavaScript API key if you want multi-marker native Google Maps instead of embed-based maps
-- Move local JSON sessions to DynamoDB if deploying the proposal's AWS architecture
 - Use the scoring rubric in `docs/evaluation-plan.md` to compare LLM-only, basic RAG, and personalized RAG results
