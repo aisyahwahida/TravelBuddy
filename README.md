@@ -149,64 +149,228 @@ The production deployment runs on:
 
 | Component | Service | Address |
 |-----------|---------|---------|
-| Frontend  | S3 static website | `http://travelbuddy-frontend-705715.s3-website-us-east-1.amazonaws.com` |
-| Backend   | EC2 t3.small (Amazon Linux 2023) | `http://44.206.85.114:8000` |
+| Frontend  | S3 static website | `http://travelbuddy-frontend-1781293063.s3-website-us-east-1.amazonaws.com` |
+| Backend   | EC2 t3.small (Amazon Linux 2023) | `http://18.232.4.103:8000` |
 | Sessions  | DynamoDB table `travelbuddy-sessions` | us-east-1 |
 
-### Starting a new lab session
+> **Note:** The AWS Academy Learner Lab resets all resources (EC2, Elastic IP, S3) when budget runs out or a new account is issued. If the backend is unreachable, follow the "Rebuilding from scratch" section below.
 
-Each time you start the AWS Academy Learner Lab the credentials rotate. You need to push the new credentials to EC2 so DynamoDB keeps working.
+---
 
-**Step 1 — get credentials from the Academy lab page** (AccessKey + SecretKey shown when the lab is running).
+### Every time you start a new lab session
 
-**Step 2 — open your Mac terminal** and run:
+Each time you start the AWS Academy Learner Lab the credentials rotate. The EC2 instance also stops and must be restarted.
 
-```bash
-ssh -i /tmp/travelbuddy-key.pem ec2-user@44.206.85.114
-bash ~/refresh_creds.sh <NewAccessKey> <NewSecretKey>
+**Step 1 — start the lab** in the Academy LMS (Canvas). Wait for the green dot.
+
+**Step 2 — get the new credentials** from the lab page: click **AWS Details → Show**. Note the `AccessKey` and `SecretKey`.
+
+**Step 3 — update your local `.env`** (repo root) with the new keys:
+```
+AWS_ACCESS_KEY_ID=<new key>
+AWS_SECRET_ACCESS_KEY=<new secret>
 ```
 
-That updates `/home/ec2-user/backend/.aws_env` and restarts the backend service automatically.
+**Step 4 — start the EC2 instance** from the Academy sandbox terminal:
+```bash
+aws ec2 start-instances --instance-ids <instance-id>
+aws ec2 wait instance-running --instance-ids <instance-id>
+```
 
-> **If `/tmp/travelbuddy-key.pem` is missing** (Mac rebooted), re-download the key from the Academy lab page and save it to `/tmp/travelbuddy-key.pem`, then run `chmod 400 /tmp/travelbuddy-key.pem`.
+> To find the instance ID: `aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,State.Name]" --output text`
 
-If you skip the credential refresh the backend still works — it falls back to local JSON file sessions on EC2. DynamoDB just won't receive new session data until credentials are refreshed.
+**Step 5 — push new credentials to EC2** from your Mac terminal:
+```bash
+ssh -i /tmp/travelbuddy-key.pem ec2-user@18.232.4.103 "bash ~/refresh_creds.sh <NewAccessKey> <NewSecretKey>"
+```
+
+> **If `/tmp/travelbuddy-key.pem` is missing** (Mac rebooted), click **Download PEM** on the Academy lab page, then:
+> ```bash
+> mv ~/Downloads/labsuser.pem /tmp/travelbuddy-key.pem
+> chmod 400 /tmp/travelbuddy-key.pem
+> ```
+
+---
 
 ### Deploying backend changes
 
 ```bash
 # From the repo root on your Mac:
-cd backend
-zip -r /tmp/backend_v2.zip app requirements.txt -x "app/__pycache__/*" "app/**/__pycache__/*" "app/data/embedding_cache.pkl"
+zip -r /tmp/backend_v2.zip backend/app backend/requirements.txt \
+  -x "backend/app/__pycache__/*" "backend/app/**/__pycache__/*" "backend/app/data/embedding_cache.pkl"
 
-AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
-  aws s3 cp /tmp/backend_v2.zip s3://travelbuddy-frontend-705715/deploys/backend_v2.zip
+# SCP directly to EC2 (bypass S3):
+source .env
+scp -i $EC2_KEY /tmp/backend_v2.zip ec2-user@$EC2_HOST:~/backend_v2.zip
 
 # Then on EC2:
-ssh -i /tmp/travelbuddy-key.pem ec2-user@44.206.85.114
-aws s3 cp s3://travelbuddy-frontend-705715/deploys/backend_v2.zip ~/backend_v2.zip
+ssh -i /tmp/travelbuddy-key.pem ec2-user@18.232.4.103
 sudo systemctl stop travelbuddy
-cd ~ && rm -rf backend_new && mkdir backend_new && unzip -q backend_v2.zip -d backend_new
-rm -rf backend_old && mv backend backend_old && mv backend_new backend
+rm -rf ~/backend_old ~/backend_new && mkdir ~/backend_new
+unzip -q ~/backend_v2.zip -d ~/backend_new
+mv ~/backend ~/backend_old && mv ~/backend_new/backend ~/backend 2>/dev/null || mv ~/backend_new/* ~/backend/
 sudo chown -R ec2-user:ec2-user ~/backend
-# Recreate the credentials file (it lives inside the backend folder)
+# Recreate the credentials file (it lives inside the backend folder):
 bash ~/refresh_creds.sh <AccessKey> <SecretKey>
+sudo systemctl start travelbuddy
 ```
 
 ### Deploying frontend changes
 
 ```bash
-# From frontend/:
+# From frontend/ on your Mac:
 npm run build
 
-AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
-  aws s3 sync dist/ s3://travelbuddy-frontend-705715/ --delete \
-  --cache-control "public, max-age=31536000, immutable" --exclude "*.html"
+source ../.env
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 sync dist/ s3://$S3_BUCKET/ --exclude "*.html" \
+  --cache-control "public, max-age=31536000, immutable"
 
-AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret> AWS_DEFAULT_REGION=us-east-1 \
-  aws s3 cp dist/index.html s3://travelbuddy-frontend-705715/index.html \
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 cp dist/index.html s3://$S3_BUCKET/index.html \
   --cache-control "no-cache, no-store, must-revalidate"
 ```
+
+---
+
+### Rebuilding from scratch (new Academy account)
+
+If the EC2 instance or S3 bucket no longer exists (account reset), follow these steps from the **Academy sandbox terminal**.
+
+**Step 1 — create a security group:**
+```bash
+SG_ID=$(aws ec2 create-security-group --group-name travelbuddy-sg --description "TravelBuddy backend" --query GroupId --output text)
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 8000 --cidr 0.0.0.0/0
+```
+
+**Step 2 — launch the instance:**
+```bash
+AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=al2023-ami-*-x86_64" "Name=state,Values=available" --query "sort_by(Images, &CreationDate)[-1].ImageId" --output text)
+INSTANCE_ID=$(aws ec2 run-instances --image-id $AMI_ID --instance-type t3.small --key-name vockey --security-group-ids $SG_ID --count 1 --query "Instances[0].InstanceId" --output text)
+aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+echo "Instance: $INSTANCE_ID"
+```
+
+**Step 3 — allocate an Elastic IP:**
+```bash
+ALLOC_ID=$(aws ec2 allocate-address --domain vpc --query AllocationId --output text)
+aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id $ALLOC_ID
+aws ec2 describe-addresses --allocation-ids $ALLOC_ID --query "Addresses[0].PublicIp" --output text
+```
+
+**Step 4 — expand the root volume to 24 GB** (from your Mac terminal, replace `vol-xxx` with the actual volume ID):
+```bash
+source .env
+VOLUME_ID=$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+  --query "Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId" --output text)
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws ec2 modify-volume --volume-id $VOLUME_ID --size 24
+# Then SSH into the instance and run:
+# sudo growpart /dev/xvda 1 && sudo xfs_growfs /
+```
+
+**Step 5 — download the PEM key** from the Academy lab page → save as `/tmp/travelbuddy-key.pem`:
+```bash
+mv ~/Downloads/labsuser.pem /tmp/travelbuddy-key.pem && chmod 400 /tmp/travelbuddy-key.pem
+```
+
+**Step 6 — update `.env` and `frontend/.env`** with the new IP:
+```
+# .env
+EC2_HOST=<new-ip>
+
+# frontend/.env
+VITE_API_BASE=http://<new-ip>:8000/api
+```
+
+**Step 7 — install backend** (from Mac terminal):
+```bash
+source .env
+scp -i $EC2_KEY /tmp/backend_v2.zip ec2-user@$EC2_HOST:~/backend_v2.zip
+ssh -i $EC2_KEY ec2-user@$EC2_HOST "
+  sudo dnf install -y python3.11 python3.11-pip unzip &&
+  mkdir -p ~/backend && unzip -q ~/backend_v2.zip -d ~/backend_tmp &&
+  mv ~/backend_tmp/backend/* ~/backend/ 2>/dev/null || mv ~/backend_tmp/* ~/backend/ &&
+  mkdir -p ~/pip_tmp &&
+  TMPDIR=~/pip_tmp pip3.11 install -r ~/backend/requirements.txt
+"
+```
+
+**Step 8 — write credentials and set up systemd:**
+```bash
+ssh -i $EC2_KEY ec2-user@$EC2_HOST "
+cat > ~/backend/.aws_env << EOF
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+AWS_DEFAULT_REGION=us-east-1
+SESSION_TABLE=travelbuddy-sessions
+EOF
+
+sudo tee /etc/systemd/system/travelbuddy.service > /dev/null << 'SVC'
+[Unit]
+Description=TravelBuddy FastAPI Backend
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/backend
+EnvironmentFile=/home/ec2-user/backend/.aws_env
+ExecStart=/usr/bin/python3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+SVC
+
+sudo systemctl daemon-reload && sudo systemctl enable travelbuddy && sudo systemctl start travelbuddy
+
+cat > ~/refresh_creds.sh << 'SCRIPT'
+#!/bin/bash
+KEY=\$1; SECRET=\$2
+cat > /home/ec2-user/backend/.aws_env << ENVEOF
+AWS_ACCESS_KEY_ID=\$KEY
+AWS_SECRET_ACCESS_KEY=\$SECRET
+AWS_DEFAULT_REGION=us-east-1
+SESSION_TABLE=travelbuddy-sessions
+ENVEOF
+sudo systemctl restart travelbuddy
+echo 'Credentials updated and service restarted.'
+SCRIPT
+chmod +x ~/refresh_creds.sh
+"
+```
+
+**Step 9 — create S3 bucket and deploy frontend:**
+```bash
+source .env
+NEW_BUCKET="travelbuddy-frontend-$(date +%s)"
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 mb s3://$NEW_BUCKET --region us-east-1
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3api put-public-access-block --bucket $NEW_BUCKET \
+  --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 website s3://$NEW_BUCKET --index-document index.html --error-document index.html
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3api put-bucket-policy --bucket $NEW_BUCKET \
+  --policy "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"PublicRead\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$NEW_BUCKET/*\"}]}"
+
+# Update S3_BUCKET in .env, then build and deploy:
+# S3_BUCKET=<new-bucket-name>
+cd frontend && npm run build
+source ../.env
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 sync dist/ s3://$S3_BUCKET/ --exclude "*.html" --cache-control "public, max-age=31536000, immutable"
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION=us-east-1 \
+  aws s3 cp dist/index.html s3://$S3_BUCKET/index.html --cache-control "no-cache, no-store, must-revalidate"
+```
+
+Frontend URL: `http://<new-bucket>.s3-website-us-east-1.amazonaws.com`
 
 ## Next Integrations
 
