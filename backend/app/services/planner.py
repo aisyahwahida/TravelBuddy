@@ -12,18 +12,47 @@ def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def _route_distance(stops: list[Place]) -> float:
+    return sum(
+        _haversine(stops[i].latitude, stops[i].longitude, stops[i + 1].latitude, stops[i + 1].longitude)
+        for i in range(len(stops) - 1)
+    )
+
+
+def _two_opt(stops: list[Place]) -> list[Place]:
+    """Repeatedly reverse sub-segments that reduce total route distance."""
+    best = list(stops)
+    best_dist = _route_distance(best)
+    improved = True
+    while improved:
+        improved = False
+        for i in range(1, len(best) - 1):
+            for j in range(i + 1, len(best)):
+                candidate = best[:i] + best[i:j + 1][::-1] + best[j + 1:]
+                d = _route_distance(candidate)
+                if d < best_dist - 1e-9:
+                    best, best_dist, improved = candidate, d, True
+    return best
+
+
 def _nearest_neighbor_sort(stops: list[Place]) -> list[Place]:
-    """Sort stops using nearest-neighbor to minimise total walking distance."""
+    """Best nearest-neighbor from every start point, then 2-opt improved."""
     if len(stops) <= 2:
         return stops
-    remaining = list(stops)
-    ordered = [remaining.pop(0)]
-    while remaining:
-        last = ordered[-1]
-        nearest = min(remaining, key=lambda s: _haversine(last.latitude, last.longitude, s.latitude, s.longitude))
-        ordered.append(nearest)
-        remaining.remove(nearest)
-    return ordered
+    best_route: list[Place] = []
+    best_dist = float("inf")
+    for start in range(len(stops)):
+        remaining = list(stops)
+        ordered = [remaining.pop(start)]
+        while remaining:
+            last = ordered[-1]
+            nearest = min(remaining, key=lambda s: _haversine(last.latitude, last.longitude, s.latitude, s.longitude))
+            ordered.append(nearest)
+            remaining.remove(nearest)
+        d = _route_distance(ordered)
+        if d < best_dist:
+            best_dist, best_route = d, ordered
+    return _two_opt(best_route)
 
 
 def _tags(place: Place) -> set[str]:

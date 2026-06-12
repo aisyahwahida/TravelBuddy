@@ -170,7 +170,7 @@ function persistSessions(sessions: SavedSession[]) {
 
 function altToPlace(alt: AlternativePlace, template: Place): Place {
   return {
-    ...template,
+    ...template,           // keep photo_name, estimated_duration_minutes, etc.
     name: alt.name,
     category: alt.category,
     city: alt.city,
@@ -190,7 +190,7 @@ function altToPlace(alt: AlternativePlace, template: Place): Place {
     google_price_label: "",
     google_price_level: "",
     open_status_label: "",
-    photo_name: "",
+    // photo_name intentionally kept from template — alt has no Google photo
     map_url: "",
     opening_hours: [],
     open_now: null,
