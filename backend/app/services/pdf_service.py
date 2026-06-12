@@ -161,14 +161,13 @@ def _cover(itinerary: Itinerary, styles: dict) -> list:
 
 # ── Column widths for the itinerary table ─────────────────────────────────────
 # #  | Place        | Category   | Rating | Why go / Local tip | Map
-_COL_W = [
-    8 * mm,    # #
-    44 * mm,   # Place
-    24 * mm,   # Category
-    20 * mm,   # Rating
-    50 * mm,   # Why go
-    INNER - 8 - 44 - 24 - 20 - 50,  # Map (remainder ~27mm)
-]
+_COL_NUM  = 8  * mm
+_COL_PLC  = 44 * mm
+_COL_CAT  = 24 * mm
+_COL_RATE = 20 * mm
+_COL_WHY  = 50 * mm
+_COL_MAP  = INNER - _COL_NUM - _COL_PLC - _COL_CAT - _COL_RATE - _COL_WHY  # ~28mm
+_COL_W = [_COL_NUM, _COL_PLC, _COL_CAT, _COL_RATE, _COL_WHY, _COL_MAP]
 
 
 def _rating_cell(stop: Place, styles: dict) -> Paragraph:

@@ -364,12 +364,14 @@ def split_stops_by_day(
         if not stops_for_day:
             continue
         theme = _day_theme_for(index, stops_for_day)
-        geo_sorted = _nearest_neighbor_sort(stops_for_day)
         scheduled_stops = _schedule_day_stops(
-            geo_sorted,
+            stops_for_day,
             force_full_day=True,
             theme_matcher=theme["matcher"],
         )
+        # Re-optimize route after slot assignment (which reorders by type)
+        if len(scheduled_stops) > 2:
+            scheduled_stops = _two_opt(scheduled_stops)
         # Pad with any remaining unique stops if below minimum
         if len(scheduled_stops) < MIN_STOPS_PER_DAY:
             used_names = {s.name for s in scheduled_stops}

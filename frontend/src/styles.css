@@ -357,6 +357,18 @@ textarea { font-family: inherit; }
   box-shadow: 0 0 0 2px var(--gold-soft), var(--shadow);
   background: var(--gold-soft);
 }
+.stop.drag-over-reorder {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px rgba(31,111,92,.15), var(--shadow);
+  background: var(--green-soft);
+}
+.stop.stop-dragging { opacity: .4; }
+.stop-drag-handle {
+  flex: 0 0 auto; color: var(--ink-4);
+  cursor: grab; transition: color .15s;
+}
+.stop:hover .stop-drag-handle { color: var(--ink-3); }
+.stop-drag-handle:active { cursor: grabbing; }
 .alt[draggable] { cursor: grab; }
 .alt[draggable]:active { cursor: grabbing; opacity: .75; }
 .alt-drag-handle { cursor: inherit; }

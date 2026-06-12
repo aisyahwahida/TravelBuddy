@@ -7,6 +7,7 @@ import {
   Download,
   ExternalLink,
   Footprints,
+  GripVertical,
   History,
   LoaderCircle,
   MapPin,
@@ -238,6 +239,8 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [dragReorderOver, setDragReorderOver] = useState<string | null>(null);
+  const [draggingStop, setDraggingStop] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>(loadSessions);
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -424,14 +427,25 @@ export default function App() {
   }
 
   function handleDrop(alt: AlternativePlace, dayIndex: number, stopIndex: number) {
+    const replaced = planDays[dayIndex].stops[stopIndex];
     setPlanDays((prev) => {
       const days = prev.map((d) => ({ ...d, stops: [...d.stops] }));
-      const replaced = days[dayIndex].stops[stopIndex];
-      days[dayIndex].stops[stopIndex] = altToPlace(alt, replaced);
-      setPlanAlts((prevAlts) => [
-        placeToAlt(replaced),
-        ...prevAlts.filter((a) => a.name !== alt.name),
-      ]);
+      days[dayIndex].stops[stopIndex] = altToPlace(alt, days[dayIndex].stops[stopIndex]);
+      return days;
+    });
+    setPlanAlts((prevAlts) => [
+      placeToAlt(replaced),
+      ...prevAlts.filter((a) => a.name !== alt.name),
+    ]);
+  }
+
+  function handleStopReorder(fromDay: number, fromStop: number, toDay: number, toStop: number) {
+    if (fromDay !== toDay || fromStop === toStop) return;
+    setPlanDays((prev) => {
+      const days = prev.map((d) => ({ ...d, stops: [...d.stops] }));
+      const stops = days[fromDay].stops;
+      const [moved] = stops.splice(fromStop, 1);
+      stops.splice(toStop, 0, moved);
       return days;
     });
   }
@@ -681,20 +695,48 @@ export default function App() {
                           return (
                             <button
                               key={`${stop.name}-${stopIndex}`}
-                              className={`stop${isActive ? " active" : ""}${dragOver === dropKey ? " drag-over" : ""}`}
+                              className={`stop${isActive ? " active" : ""}${dragOver === dropKey ? " drag-over" : ""}${dragReorderOver === dropKey ? " drag-over-reorder" : ""}${draggingStop === dropKey ? " stop-dragging" : ""}`}
                               type="button"
+                              draggable
                               onClick={() => handleSelectStop(dayIndex, stopIndex)}
-                              onDragOver={(e) => { e.preventDefault(); setDragOver(dropKey); }}
-                              onDragLeave={() => setDragOver(null)}
+                              onDragStart={(e) => {
+                                setDraggingStop(dropKey);
+                                e.dataTransfer.setData("application/stop", JSON.stringify({ dayIndex, stopIndex }));
+                                e.dataTransfer.effectAllowed = "move";
+                              }}
+                              onDragEnd={() => {
+                                setDraggingStop(null);
+                                setDragReorderOver(null);
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                if (e.dataTransfer.types.includes("application/stop")) {
+                                  setDragReorderOver(dropKey);
+                                } else {
+                                  setDragOver(dropKey);
+                                }
+                              }}
+                              onDragLeave={() => { setDragOver(null); setDragReorderOver(null); }}
                               onDrop={(e) => {
                                 e.preventDefault();
                                 setDragOver(null);
-                                try {
-                                  const alt: AlternativePlace = JSON.parse(e.dataTransfer.getData("text/plain"));
-                                  handleDrop(alt, dayIndex, stopIndex);
-                                } catch {}
+                                setDragReorderOver(null);
+                                setDraggingStop(null);
+                                const stopData = e.dataTransfer.getData("application/stop");
+                                if (stopData) {
+                                  try {
+                                    const { dayIndex: fd, stopIndex: fs } = JSON.parse(stopData);
+                                    handleStopReorder(fd, fs, dayIndex, stopIndex);
+                                  } catch {}
+                                } else {
+                                  try {
+                                    const alt: AlternativePlace = JSON.parse(e.dataTransfer.getData("text/plain"));
+                                    handleDrop(alt, dayIndex, stopIndex);
+                                  } catch {}
+                                }
                               }}
                             >
+                              <GripVertical size={13} className="stop-drag-handle" />
                               <span className="stop-num">{stopIndex + 1}</span>
                               <PlacePhoto photoName={stop.photo_name} alt={stop.name} className="stop-img" />
                               <span className="stop-body">
@@ -768,7 +810,7 @@ export default function App() {
                 <section className="alts">
                   <div className="alts-head">
                     <h3>Alternative places</h3>
-                    <span className="hint">Drag any card onto a stop to swap it in</span>
+                    <span className="hint">Drag cards to swap · drag ⠿ handle to reorder</span>
                   </div>
                   <div className="alts-grid">
                     {planAlts.slice(0, 4).map((alt, idx) => (
