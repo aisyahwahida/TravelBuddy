@@ -176,6 +176,7 @@ def _all_places(include_must_go: bool = False) -> list[dict]:
                 "business_status": google_match.get("business_status", ""),
                 "opening_hours": google_match.get("opening_hours", []),
                 "open_now": google_match.get("open_now"),
+                "photo_name": google_match.get("photo_name", ""),
             }
         merged.append(place)
 
@@ -978,6 +979,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
             source_title=place.get("source_title", ""),
             source_url=place.get("source_url", ""),
             confidence=place.get("confidence", 1.0),
+            photo_name=place.get("photo_name", ""),
         )
         for place in ranked[:result_limit]
     ]

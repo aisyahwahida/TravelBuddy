@@ -8,7 +8,7 @@ from urllib import request
 from dotenv import load_dotenv
 
 from app.data.france_places import FRANCE_PLACES
-from app.services.retriever import REDDIT_PLACES_PATH
+from app.services.retriever import REDDIT_PLACES_PATH, OSM_POI_PLACES_PATH
 
 load_dotenv()
 
@@ -39,9 +39,27 @@ def _load_reddit_places() -> list[dict]:
     return []
 
 
+def _load_osm_poi_places() -> list[dict]:
+    if not OSM_POI_PLACES_PATH.exists():
+        return []
+    try:
+        payload = json.loads(OSM_POI_PLACES_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    if isinstance(payload, dict):
+        return payload.get("places", [])
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
 def _candidate_places(reddit_only: bool = False) -> list[dict]:
     reddit_places = _load_reddit_places()
-    places = reddit_places if reddit_only else [*FRANCE_PLACES, *reddit_places]
+    osm_places = _load_osm_poi_places()
+    if reddit_only:
+        places = reddit_places
+    else:
+        places = [*FRANCE_PLACES, *reddit_places, *osm_places]
     deduped: dict[str, dict] = {}
     for place in places:
         key = f"{place.get('name', '').lower()}::{place.get('city', '').lower()}"
@@ -81,7 +99,7 @@ def fetch_google_place(place: dict) -> dict | None:
             "places.id,places.displayName,places.formattedAddress,places.location,"
             "places.rating,places.userRatingCount,places.googleMapsUri,places.reviews,"
             "places.businessStatus,places.currentOpeningHours,places.regularOpeningHours,"
-            "places.priceLevel"
+            "places.priceLevel,places.photos"
         ),
     }
     payload = {
@@ -116,6 +134,9 @@ def fetch_google_place(place: dict) -> dict | None:
         for review in match.get("reviews", [])[:3]
     ]
 
+    photos = match.get("photos", [])
+    photo_name = photos[0].get("name", "") if photos else ""
+
     title_parts = ["Google Maps reviews"]
     if rating:
         title_parts.append(f"{rating:.1f} stars")
@@ -144,6 +165,7 @@ def fetch_google_place(place: dict) -> dict | None:
         "reddit_source_title": place.get("source_title", ""),
         "reddit_source_url": place.get("source_url", ""),
         "reviews": reviews,
+        "photo_name": photo_name,
     }
 
 

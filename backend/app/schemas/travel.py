@@ -31,6 +31,7 @@ class Place(BaseModel):
     source_title: str = ""
     source_url: str = ""
     confidence: float = Field(default=1.0, ge=0, le=1)
+    photo_name: str = ""
 
 
 class TravelIntent(BaseModel):

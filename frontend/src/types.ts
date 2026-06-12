@@ -28,6 +28,7 @@ export type Place = {
   source_title: string;
   source_url: string;
   confidence: number;
+  photo_name: string;
 };
 
 export type AlternativePlace = {
