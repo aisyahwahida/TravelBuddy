@@ -33,7 +33,11 @@ async def _prewarm() -> None:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1|\[::1\]):\d+$",
+    allow_origin_regex=(
+        r"^http://(localhost|127\.0\.0\.1|\[::1\]):\d+$"
+        r"|^http://travelbuddy-frontend-705715\.s3-website[-.][a-z0-9-]+\.amazonaws\.com$"
+        r"|^http://[a-zA-Z0-9-]+\.elasticbeanstalk\.com$"
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
