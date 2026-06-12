@@ -11,7 +11,7 @@ TravelBuddy can ingest local recommendations from Reddit communities through the
 ## Required Environment Variables
 
 ```powershell
-$env:OPENAI_API_KEY="your_openai_key"
+$env:LUXIA_API_KEY="your_luxia_api_key"
 $env:REDDIT_CLIENT_ID="your_reddit_app_client_id"
 $env:REDDIT_CLIENT_SECRET="your_reddit_app_client_secret"
 $env:REDDIT_USER_AGENT="travelbuddy-france-local-recs/0.1 by your_reddit_username"
@@ -58,7 +58,7 @@ Then run:
 python -m app.services.reddit_ingestion --mode manual
 ```
 
-This uses OpenAI to extract named France places from your manually supplied Reddit content and saves them into `reddit_places.json`.
+This uses Luxia to extract named France places from your manually supplied Reddit content and saves them into `reddit_places.json`.
 
 ## No Reddit API Option: Public Thread URLs
 
@@ -167,7 +167,7 @@ Invoke-RestMethod http://127.0.0.1:8000/api/reddit/status
 
 1. Search selected subreddits for restaurant and local-place queries.
 2. Pull each matching submission and a bounded number of top comments.
-3. Ask OpenAI to extract named France places only.
+3. Ask Luxia to extract named France places only.
 4. Save deduplicated `Place` objects into the local cache.
 5. Merge cached Reddit places into the normal retrieval pipeline.
 

@@ -1,0 +1,1786 @@
+{
+  "total": 35,
+  "results": [
+    {
+      "prompt": "plan something fun",
+      "request_intents": [
+        "itinerary"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 3,
+      "clarification_question": "Do you want this to feel local/quiet, iconic/first-time, food-focused, or budget-friendly?",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Luxembourg Gardens",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Cafe Celeste",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Marche d'Aligre",
+          "city": "Paris",
+          "category": "Market",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "I have one day in Paris and it is my first time, include Eiffel Tower and dinner",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation",
+        "must_go_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Eiffel Tower",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Brasserie Lipp",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Centre Pompidou",
+          "city": "Paris",
+          "category": "must-go museum",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Sacr\u00e9-C\u0153ur Basilica",
+          "city": "Paris",
+          "category": "must-go religious heritage",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "3 days in Paris, I want museums, shopping, cafes, and no repeated places",
+      "request_intents": [
+        "itinerary",
+        "place_recommendation",
+        "museum_plan",
+        "shopping_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 3,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 18,
+      "day_count": 3,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Bis Boutique",
+          "city": "Paris",
+          "category": "vintage shop",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Hippy Market",
+          "city": "Paris",
+          "category": "Vintage / thrift store",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Librairie Delamain",
+          "city": "Paris",
+          "category": "Bookstore",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Stola Vintage",
+          "city": "Paris",
+          "category": "vintage shop",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Librairie Galignani",
+          "city": "Paris",
+          "category": "bookstore",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "cheap weekend in Lyon with local food and free things",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation",
+        "budget_plan"
+      ],
+      "destination": "Lyon",
+      "duration_days": 2,
+      "budget": "budget",
+      "mood": "foodie",
+      "group_type": "local-first",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 12,
+      "day_count": 2,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Marche Saint-Antoine",
+          "city": "Lyon",
+          "category": "Market",
+          "source_type": "reddit"
+        },
+        {
+          "name": "L'Esprit Bistrot",
+          "city": "Lyon",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Croix-Rousse",
+          "city": "Lyon",
+          "category": "neighborhood",
+          "source_type": ""
+        },
+        {
+          "name": "KFC",
+          "city": "Lyon",
+          "category": "Fast food restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "IKEA",
+          "city": "Lyon",
+          "category": "Department store / restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Bistro Autrement",
+          "city": "Lyon",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "romantic evening in Nice for a couple, sunset and dinner",
+      "request_intents": [
+        "food_recommendation",
+        "romantic_plan"
+      ],
+      "destination": "Nice",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "romantic",
+      "group_type": "couple",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Restaurant Simon",
+          "city": "Nice",
+          "category": "regional restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Rodizio",
+          "city": "Nice",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "quiet cafes in Bordeaux where I can read",
+      "request_intents": [
+        "quiet_plan"
+      ],
+      "destination": "Bordeaux",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "quiet",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Voltigeur",
+          "city": "Bordeaux",
+          "category": "cafe",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Bouillon Saint-Jean",
+          "city": "Bordeaux",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "L'Esprit Routier - Les 3 Cardinaux",
+          "city": "Bordeaux",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "family trip in Marseille with kids and not too much walking",
+      "request_intents": [
+        "itinerary",
+        "family_trip",
+        "walking_route"
+      ],
+      "destination": "Marseille",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "family",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Oh ! Mirettes",
+          "city": "Marseille",
+          "category": "gallery",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Noailles Market",
+          "city": "Marseille",
+          "category": "market",
+          "source_type": ""
+        },
+        {
+          "name": "O'Malley's",
+          "city": "Marseille",
+          "category": "pub",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Bookineur",
+          "city": "Marseille",
+          "category": "books shop",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Le grain de sel",
+          "city": "Marseille",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "solo walking route in Strasbourg, pretty streets and coffee",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation",
+        "walking_route"
+      ],
+      "destination": "Strasbourg",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "solo",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 7,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "La Cigogne",
+          "city": "Strasbourg",
+          "category": "cafe",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Restaurant Cafe am Yachthafen",
+          "city": "Strasbourg",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "rainy day indoor plan in Paris",
+      "request_intents": [
+        "itinerary",
+        "rainy_day_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "indoor",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Paris Sewer Museum (Musee des Egouts de Paris)",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Du Pain et des Idees",
+          "city": "Paris",
+          "category": "bakery",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Passage du Grand Cerf",
+          "city": "Paris",
+          "category": "shopping_street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Carnavalet",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "best Asian restaurants in Paris near museums",
+      "request_intents": [
+        "food_recommendation",
+        "museum_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "",
+      "food_preference": "asian",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Trois Fois Plus de Piment",
+          "city": "Paris",
+          "category": "chinese restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Pho Banh Cuon 14",
+          "city": "Paris",
+          "category": "vietnamese restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "I want Vietnamese food for lunch and a calm afternoon",
+      "request_intents": [
+        "food_recommendation",
+        "quiet_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "quiet",
+      "group_type": "",
+      "food_preference": "vietnamese",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 3,
+      "clarification_question": "I assumed Paris; tell me if you want another French city.",
+      "candidate_count": 6,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Pho Banh Cuon 14",
+          "city": "Paris",
+          "category": "vietnamese restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Pho Thai",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "local hidden gems in Lille, avoid tourist traps",
+      "request_intents": [
+        "general_travel_advice"
+      ],
+      "destination": "Lille",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "adventurous",
+      "group_type": "local-first",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Saint-Sauveur - Salle d'exposition",
+          "city": "Lille",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Caf\u00e9 du Vieux-Lille",
+          "city": "Lille",
+          "category": "cafe",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "L'escale",
+          "city": "Lille",
+          "category": "regional;french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Maison Folie Le Colys\u00e9e",
+          "city": "Lille",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Wazemmes Market",
+          "city": "Lille",
+          "category": "market",
+          "source_type": ""
+        }
+      ]
+    },
+    {
+      "prompt": "first time in France for 5 days, classic sights and good meals",
+      "request_intents": [
+        "itinerary",
+        "must_go_plan"
+      ],
+      "destination": "France",
+      "duration_days": 5,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 24,
+      "day_count": 5,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Panth\u00e9on",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Promenade des Anglais",
+          "city": "Nice",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Mus\u00e9e d'Orsay",
+          "city": "Paris",
+          "category": "must-go museum",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Le Petit March\u00e9",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Omaha Beach",
+          "city": "Normandy",
+          "category": "must-go heritage site",
+          "source_type": "curated_must_go"
+        }
+      ]
+    },
+    {
+      "prompt": "museum hopping day in Paris with lunch nearby",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation",
+        "museum_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "cultural",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "indoor",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Cafe des Musees",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Carnavalet",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "shopping day for affordable souvenirs in Paris",
+      "request_intents": [
+        "itinerary",
+        "budget_plan",
+        "shopping_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "budget",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Monoprix Avenue des Ternes",
+          "city": "Paris",
+          "category": "affordable grocery and general store",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Pharmacie Monge",
+          "city": "Paris",
+          "category": "pharmacy skincare shopping",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Sophie Sacs",
+          "city": "Paris",
+          "category": "affordable leather bag shop",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "luxury shopping and a nice dinner in Paris",
+      "request_intents": [
+        "food_recommendation",
+        "shopping_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "luxury",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Avenue Montaigne",
+          "city": "Paris",
+          "category": "shopping_street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Saint-Honore",
+          "city": "Paris",
+          "category": "luxury shopping street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Printemps Haussmann",
+          "city": "Paris",
+          "category": "department store",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "nightlife plan in Lyon with bars but safe transport",
+      "request_intents": [
+        "itinerary",
+        "nightlife_plan",
+        "general_travel_advice"
+      ],
+      "destination": "Lyon",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Lyon Kayak",
+          "city": "Lyon",
+          "category": "Outdoor activity / event",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Au Bureau",
+          "city": "Lyon",
+          "category": "Bar / restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "TripFrip Vintage",
+          "city": "Lyon",
+          "category": "vintage and upcycling shop",
+          "source_type": "reddit"
+        },
+        {
+          "name": "L'Esprit Bistrot",
+          "city": "Lyon",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "I only have 6 hours in Nice, what should I do?",
+      "request_intents": [
+        "itinerary",
+        "place_recommendation"
+      ],
+      "destination": "Nice",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Museum d'Histoire Naturelle",
+          "city": "Nice",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Beurr\u00e9",
+          "city": "Nice",
+          "category": "cafe",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "L'Appart",
+          "city": "Nice",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Mus\u00e9e Volti",
+          "city": "Nice",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Cours Saleya Flower Market",
+          "city": "Nice",
+          "category": "market",
+          "source_type": ""
+        },
+        {
+          "name": "La Maison Libanaise",
+          "city": "Nice",
+          "category": "lebanese restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "Plan a slow Sunday in Bordeaux with markets and wine",
+      "request_intents": [
+        "itinerary",
+        "quiet_plan"
+      ],
+      "destination": "Bordeaux",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "relaxed",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Mus\u00e9e d'ethnographie de l'Universit\u00e9 de Bordeaux",
+          "city": "Bordeaux",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Marche des Capucins",
+          "city": "Bordeaux",
+          "category": "food market",
+          "source_type": ""
+        },
+        {
+          "name": "Walky",
+          "city": "Bordeaux",
+          "category": "bar",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Bouillon Saint-Jean",
+          "city": "Bordeaux",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "I hate crowds, suggest peaceful outdoor places in Paris",
+      "request_intents": [
+        "place_recommendation",
+        "quiet_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "quiet",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "outdoor",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Jardin Yitzhak Rabin",
+          "city": "Paris",
+          "category": "garden",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Boot Cafe",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Bourdelle",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Marche Secretan",
+          "city": "Paris",
+          "category": "market",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "Where should my parents go in France if they cannot walk much?",
+      "request_intents": [
+        "walking_route"
+      ],
+      "destination": "France",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "family",
+      "food_preference": "",
+      "indoor_outdoor": "outdoor",
+      "transportation": "transit or taxi",
+      "walking_constraints": "limited walking",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Jardin des Plantes",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue des Martyrs",
+          "city": "Paris",
+          "category": "food street",
+          "source_type": ""
+        }
+      ]
+    },
+    {
+      "prompt": "Give me general advice for using public transport in Paris",
+      "request_intents": [
+        "general_travel_advice"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "public transport",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Cafe Celeste",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Jardin des Plantes",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Marche d'Aligre",
+          "city": "Paris",
+          "category": "Market",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "food-only itinerary in Marseille, lunch and dinner",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation"
+      ],
+      "destination": "Marseille",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Dubble",
+          "city": "Marseille",
+          "category": "health_food restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Food & Friends",
+          "city": "Marseille",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "free museums and cheap eats in Paris",
+      "request_intents": [
+        "budget_plan",
+        "museum_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "budget",
+      "mood": "cultural",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Musee Bourdelle",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Carnavalet",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Les Archives nationales",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "cute date plan in Strasbourg under 80 euros",
+      "request_intents": [
+        "itinerary",
+        "budget_plan",
+        "romantic_plan"
+      ],
+      "destination": "Strasbourg",
+      "duration_days": 1,
+      "budget": "80 eur",
+      "mood": "romantic",
+      "group_type": "couple",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Anatolian garden",
+          "city": "Strasbourg",
+          "category": "kebab restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Restaurant Napoli",
+          "city": "Strasbourg",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Restaurant Brasserie L'Anatolie (Titan)",
+          "city": "Strasbourg",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "I want something local but also one iconic landmark",
+      "request_intents": [
+        "must_go_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "local-first",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 3,
+      "clarification_question": "I assumed Paris; tell me if you want another French city.",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Panth\u00e9on",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Centre Pompidou",
+          "city": "Paris",
+          "category": "must-go museum",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Arc de Triomphe",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "Plan a cafe hopping route tomorrow in Paris",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Boot Cafe",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Cafe Celeste",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Cafe Constant",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "I am in France for 2 days but I did not choose a city",
+      "request_intents": [
+        "itinerary"
+      ],
+      "destination": "France",
+      "duration_days": 2,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 1,
+      "clarification_question": "",
+      "candidate_count": 12,
+      "day_count": 2,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Jardin des Plantes",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Palace of Versailles",
+          "city": "Versailles",
+          "category": "historic site",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "Best places for photos in Lyon without tourist traps",
+      "request_intents": [
+        "place_recommendation"
+      ],
+      "destination": "Lyon",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Confluence (quartier de la Confluence)",
+          "city": "Lyon",
+          "category": "Neighborhood",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Mistral",
+          "city": "Lyon",
+          "category": "cafe",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Ginette et Marius",
+          "city": "Lyon",
+          "category": "coffee_shop;french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Cit\u00e9 mus\u00e9e Tony",
+          "city": "Lyon",
+          "category": "museum",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Le Caterpilou",
+          "city": "Lyon",
+          "category": "Playground",
+          "source_type": "reddit"
+        },
+        {
+          "name": "L'Esprit Bistrot",
+          "city": "Lyon",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "Indoor activities for kids in Paris when it rains",
+      "request_intents": [
+        "family_trip",
+        "rainy_day_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "family",
+      "food_preference": "",
+      "indoor_outdoor": "indoor",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Jardin d'Acclimatation",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Du Pain et des Idees",
+          "city": "Paris",
+          "category": "bakery",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Carnavalet",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Severo",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "A relaxed 4-day itinerary across France by train",
+      "request_intents": [
+        "itinerary",
+        "quiet_plan"
+      ],
+      "destination": "France",
+      "duration_days": 4,
+      "budget": "",
+      "mood": "relaxed",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "public transport",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 24,
+      "day_count": 4,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Petit Palais",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Tusk",
+          "city": "Paris",
+          "category": "french restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "Boot Cafe",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "Recommend only restaurants in Nice, seafood if possible",
+      "request_intents": [
+        "place_recommendation",
+        "food_recommendation"
+      ],
+      "destination": "Nice",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "foodie",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Rodizio",
+          "city": "Nice",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        },
+        {
+          "name": "L'Union",
+          "city": "Nice",
+          "category": "restaurant",
+          "source_type": "openstreetmap"
+        }
+      ]
+    },
+    {
+      "prompt": "I want to walk less than 20 minutes total today",
+      "request_intents": [
+        "walking_route"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "outdoor",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 3,
+      "clarification_question": "I assumed Paris; tell me if you want another French city.",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Jardin des Plantes",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue des Martyrs",
+          "city": "Paris",
+          "category": "food street",
+          "source_type": ""
+        }
+      ]
+    },
+    {
+      "prompt": "Give me a museum, a park, lunch, shopping, and dinner in Paris",
+      "request_intents": [
+        "food_recommendation",
+        "museum_plan",
+        "shopping_plan"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "",
+      "mood": "cultural",
+      "group_type": "",
+      "food_preference": "",
+      "indoor_outdoor": "mixed",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Luxembourg Gardens",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Carnavalet",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Sainte-Anne",
+          "city": "Paris",
+          "category": "shopping street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Mouffetard",
+          "city": "Paris",
+          "category": "shopping street",
+          "source_type": "reddit"
+        }
+      ]
+    },
+    {
+      "prompt": "Plan a budget solo trip with hostels area advice and local food",
+      "request_intents": [
+        "itinerary",
+        "food_recommendation",
+        "budget_plan",
+        "general_travel_advice"
+      ],
+      "destination": "Paris",
+      "duration_days": 1,
+      "budget": "budget",
+      "mood": "foodie",
+      "group_type": "solo",
+      "food_preference": "",
+      "indoor_outdoor": "",
+      "transportation": "",
+      "walking_constraints": "",
+      "assumption_count": 2,
+      "clarification_question": "I assumed Paris; tell me if you want another French city.",
+      "candidate_count": 8,
+      "day_count": 1,
+      "duplicate_count": 0,
+      "top_places": [
+        {
+          "name": "Le Grand Epicerie",
+          "city": "Paris",
+          "category": "Food hall / gourmet grocery",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Street Food Original",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Daguerre",
+          "city": "Paris",
+          "category": "market street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "FTG (Frenchie To Go)",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        }
+      ]
+    }
+  ]
+}

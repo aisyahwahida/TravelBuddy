@@ -3,6 +3,8 @@ from pathlib import Path
 
 from app.data.france_places import FRANCE_PLACES
 from app.schemas.travel import Place, TravelIntent
+from app.services.reranker import rerank_places
+from app.services.semantic_retrieval import semantic_scores
 
 REDDIT_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "reddit_places.json"
 GOOGLE_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "google_places.json"
@@ -351,9 +353,54 @@ def _matches_any_requested_type(place: dict, matchers: list) -> bool:
 
 
 def _has_restaurant_intent(intent: TravelIntent) -> bool:
-    return bool({"restaurant", "restaurants", "food"}.intersection(
-        {item.lower() for item in intent.interests}
-    ))
+    food_terms = {"restaurant", "restaurants", "food", "lunch", "dinner", "eat"}
+    return (
+        bool(food_terms.intersection({item.lower() for item in intent.interests}))
+        or "food_recommendation" in intent.request_intents
+        or bool(intent.food_preference)
+    )
+
+
+def _is_food_only_intent(intent: TravelIntent) -> bool:
+    interests = {item.lower() for item in intent.interests}
+    food_terms = {
+        "restaurant",
+        "restaurants",
+        "food",
+        "lunch",
+        "dinner",
+        "eat",
+        "asian",
+        "japanese",
+        "korean",
+        "chinese",
+        "thai",
+        "vietnamese",
+        "ramen",
+        "sushi",
+        "pho",
+        "french",
+        "bistro",
+        "brasserie",
+    }
+    activity_intents = {
+        "itinerary",
+        "budget_plan",
+        "romantic_plan",
+        "quiet_plan",
+        "family_trip",
+        "nightlife_plan",
+        "museum_plan",
+        "walking_route",
+        "shopping_plan",
+        "must_go_plan",
+        "rainy_day_plan",
+    }
+    return (
+        _has_restaurant_intent(intent)
+        and not (interests - food_terms)
+        and not activity_intents.intersection(set(intent.request_intents))
+    )
 
 
 def _has_mixed_default_intent(intent: TravelIntent) -> bool:
@@ -370,6 +417,31 @@ def _is_restaurant_place(place: dict) -> bool:
     tags = {tag.lower() for tag in place.get("tags", [])}
     haystack = f"{place.get('category', '')} {place.get('name', '')}".lower()
     return "restaurant" in tags or "restaurant" in haystack or "bistro" in tags
+
+
+def _is_indoor_candidate(place: dict) -> bool:
+    if _is_market_place(place):
+        return False
+    return (
+        _is_museum_place(place)
+        or _is_shopping_place(place)
+        or _is_cafe_place(place)
+        or _is_restaurant_place(place)
+        or _is_book_place(place)
+        or _is_event_place(place)
+    )
+
+
+def _is_romantic_candidate(place: dict) -> bool:
+    tags = {tag.lower() for tag in place.get("tags", [])}
+    text = f"{place.get('category', '')} {place.get('name', '')} {place.get('reason', '')}".lower()
+    return (
+        _is_restaurant_place(place)
+        or _is_cafe_place(place)
+        or _is_park_place(place)
+        or bool({"wine", "view", "views", "viewpoint", "garden", "romantic"}.intersection(tags))
+        or any(term in text for term in ("wine", "view", "sunset", "garden", "romantic"))
+    )
 
 
 def _has_asian_food_intent(intent: TravelIntent) -> bool:
@@ -546,7 +618,7 @@ def _blend_multiday_with_meals(
     intent: TravelIntent,
     all_regular_places: list[dict],
 ) -> list[dict]:
-    if intent.duration_days <= 1:
+    if _is_cafe_only_intent(intent):
         return ranked_places
 
     regular_city_matches = [
@@ -562,7 +634,7 @@ def _blend_multiday_with_meals(
             if _is_restaurant_place(place) or _is_market_place(place)
         ]
     )
-    meal_target = min(len(ranked_meals), intent.duration_days * 2)
+    meal_target = min(len(ranked_meals), max(2, intent.duration_days * 2))
     target_count = min(24, max(8, intent.duration_days * 6))
     blended: list[dict] = []
     seen: set[tuple[str, str]] = set()
@@ -732,7 +804,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
             ]
             if specific_matches:
                 city_matches = specific_matches
-    elif _has_restaurant_intent(intent) and not mixed_default:
+    elif _is_food_only_intent(intent) and not mixed_default:
         restaurant_matches = [place for place in city_matches if _is_restaurant_place(place)]
         if restaurant_matches:
             city_matches = restaurant_matches
@@ -759,8 +831,18 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
                 for place in city_matches
                 if _matches_any_requested_type(place, requested_matchers)
             ]
-            if typed_matches:
+            if len(typed_matches) >= 4:
                 city_matches = typed_matches
+
+    if intent.indoor_outdoor == "indoor" or "rainy_day_plan" in intent.request_intents:
+        indoor_matches = [place for place in city_matches if _is_indoor_candidate(place)]
+        if len(indoor_matches) >= 4:
+            city_matches = indoor_matches
+
+    if "romantic_plan" in intent.request_intents or intent.mood == "romantic":
+        romantic_matches = [place for place in city_matches if _is_romantic_candidate(place)]
+        if len(romantic_matches) >= 3:
+            city_matches = romantic_matches
 
     avoid_terms = {item.lower() for item in intent.avoid}
     requested_matchers = _requested_place_matchers(intent)
@@ -828,6 +910,16 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
                 score += 4
             if place.get("source_url"):
                 score += 2
+        if intent.indoor_outdoor == "indoor" or "rainy_day_plan" in intent.request_intents:
+            if _is_indoor_candidate(place):
+                score += 7
+            if _is_museum_place(place) or _is_event_place(place) or _is_book_place(place):
+                score += 4
+            if _is_park_place(place) or _is_market_place(place):
+                score -= 4
+        if "romantic_plan" in intent.request_intents or intent.mood == "romantic":
+            if _is_romantic_candidate(place):
+                score += 6
         if open_status.startswith("closed") or "permanently closed" in open_status:
             score -= 8
         if "temporarily closed" in open_status:
@@ -835,13 +927,25 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
         scored.append((score, place))
 
     ranked = [item for _, item in sorted(scored, key=lambda pair: pair[0], reverse=True)]
-    if mixed_default:
+    semantic_lookup = semantic_scores(ranked, intent)
+    result_limit = min(24, max(8, intent.duration_days * 6))
+    ranked = rerank_places(
+        ranked,
+        intent,
+        semantic_lookup,
+        limit=max(result_limit * 3, 24),
+    )
+    if (
+        mixed_default
+        or len(_requested_place_matchers(intent)) >= 2
+        or intent.indoor_outdoor == "indoor"
+        or "rainy_day_plan" in intent.request_intents
+    ):
         ranked = _balanced_mixed_order(ranked)
     if must_go_intent:
         ranked = _blend_must_go_with_meals(ranked, intent, all_regular_places)
     else:
         ranked = _blend_multiday_with_meals(ranked, intent, all_regular_places)
-    result_limit = min(24, max(8, intent.duration_days * 6))
     return [
         Place(
             name=place["name"],

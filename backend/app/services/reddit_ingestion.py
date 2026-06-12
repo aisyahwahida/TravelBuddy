@@ -10,10 +10,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import OpenAI
 from pydantic import BaseModel, Field
 
 from app.schemas.travel import Place
+from app.services.luxia_client import LuxiaClient, extract_json_object
 
 load_dotenv()
 
@@ -351,6 +351,7 @@ def collect_public_thread_snippets(
     urls: list[str],
     max_snippets: int = 500,
     comments_per_thread: int = 80,
+    request_delay_seconds: float = 1.5,
 ) -> list[RedditSnippet]:
     snippets: list[RedditSnippet] = []
     seen: set[str] = set()
@@ -427,7 +428,7 @@ def collect_public_thread_snippets(
                 ),
                 max_snippets,
             )
-        time.sleep(0.8)
+        time.sleep(request_delay_seconds)
 
     return snippets
 
@@ -437,6 +438,7 @@ def discover_public_reddit_thread_urls(
     queries: list[str],
     posts_per_query: int = 8,
     time_filter: str = "all",
+    request_delay_seconds: float = 1.0,
 ) -> list[str]:
     urls: list[str] = []
     seen: set[str] = set()
@@ -478,50 +480,45 @@ def discover_public_reddit_thread_urls(
                     continue
                 seen.add(url)
                 urls.append(url)
-            time.sleep(0.5)
+            time.sleep(request_delay_seconds)
 
     return urls
 
 
-def _extract_places_batch(client: OpenAI, snippets: list[RedditSnippet]) -> list[Place]:
-    response = client.responses.create(
-        model=os.getenv("OPENAI_MODEL", "gpt-5.2"),
-        instructions=(
-            "Extract France place recommendations from Reddit snippets. "
-            "Only include named places that appear to be genuine recommendations from users. "
-            "Include restaurants, cafes, markets, neighborhoods, museums, parks, viewpoints, "
-            "bookstores, shopping streets, boutiques, department stores, pharmacies, food gift "
-            "shops, vintage/thrift/flea markets, souvenir shops, malls, and local activity spots. "
-            "Avoid vague recommendations, private addresses, hotels unless clearly recommended as "
-            "a public place to visit, and generic city names by themselves. "
-            "Use ASCII text. Estimate coordinates only for clearly named places in France. "
-            "Set source_type to reddit, source_title to the Reddit post title, and source_url to "
-            "the Reddit permalink that supported it. Use tags that preserve user intent such as "
-            "shopping, souvenirs, affordable, luxury, vintage, local, cafes, restaurants, museum, "
-            "parks, market, nightlife, or family."
-        ),
-        input=[
+def _extract_places_batch(client: LuxiaClient, snippets: list[RedditSnippet]) -> list[Place]:
+    system_prompt = (
+        "Extract France place recommendations from Reddit snippets. "
+        "Only include named places that appear to be genuine recommendations from users. "
+        "Include restaurants, cafes, markets, neighborhoods, museums, parks, viewpoints, "
+        "bookstores, shopping streets, boutiques, department stores, pharmacies, food gift "
+        "shops, vintage/thrift/flea markets, souvenir shops, malls, and local activity spots. "
+        "Avoid vague recommendations, private addresses, hotels unless clearly recommended as "
+        "a public place to visit, and generic city names by themselves. "
+        "Use ASCII text. Estimate coordinates only for clearly named places in France. "
+        "Set source_type to reddit, source_title to the Reddit post title, and source_url to "
+        "the Reddit permalink that supported it. Use tags that preserve user intent such as "
+        "shopping, souvenirs, affordable, luxury, vintage, local, cafes, restaurants, museum, "
+        "parks, market, nightlife, or family. Return only valid JSON."
+    )
+    raw_response = client.chat(
+        messages=[
+            {"role": "system", "content": system_prompt},
             {
                 "role": "user",
                 "content": json.dumps(
                     {
                         "snippets": [snippet.model_dump() for snippet in snippets],
+                        "required_schema": RedditExtraction.model_json_schema(),
                         "required_output": "Return unique Place objects only.",
                     }
                 ),
-            }
+            },
         ],
-        text={
-            "format": {
-                "type": "json_schema",
-                "name": "reddit_place_extraction",
-                "schema": RedditExtraction.model_json_schema(),
-                "strict": False,
-            }
-        },
+        temperature=0.0,
+        max_tokens=2200,
     )
 
-    payload = json.loads(response.output_text)
+    payload = extract_json_object(raw_response)
     for place in payload.get("places", []):
         duration = int(place.get("estimated_duration_minutes") or 60)
         place["estimated_duration_minutes"] = max(15, min(duration, 360))
@@ -544,14 +541,14 @@ def _extract_places_batch(client: OpenAI, snippets: list[RedditSnippet]) -> list
     return RedditExtraction.model_validate(payload).places
 
 
-def extract_places_with_openai(snippets: list[RedditSnippet]) -> list[Place]:
+def extract_places_with_luxia(snippets: list[RedditSnippet]) -> list[Place]:
     if not snippets:
         return []
 
-    if not os.getenv("OPENAI_API_KEY"):
-        raise RuntimeError("OPENAI_API_KEY is required to extract Reddit places.")
+    client = LuxiaClient()
+    if not client.is_configured:
+        raise RuntimeError("LUXIA_API_KEY is required to extract Reddit places.")
 
-    client = OpenAI()
     deduped: dict[str, Place] = {}
     batch_size = int(os.getenv("REDDIT_EXTRACT_BATCH_SIZE", "35"))
     for start in range(0, len(snippets), batch_size):
@@ -572,17 +569,38 @@ def extract_places_with_openai(snippets: list[RedditSnippet]) -> list[Place]:
     return list(deduped.values())
 
 
-def save_reddit_places(places: list[Place], snippets: list[RedditSnippet]) -> Path:
+def _load_existing_reddit_places() -> list[Place]:
+    if not DATA_PATH.exists():
+        return []
+    payload = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    raw_places = payload.get("places", []) if isinstance(payload, dict) else []
+    return [Place.model_validate(place) for place in raw_places]
+
+
+def save_reddit_places(
+    places: list[Place],
+    snippets: list[RedditSnippet],
+    merge_existing: bool = True,
+) -> Path:
     DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not places and DATA_PATH.exists():
         raise RuntimeError(
             "No Reddit places were extracted; keeping existing reddit_places.json."
         )
+    existing_places = _load_existing_reddit_places() if merge_existing else []
+    deduped: dict[str, Place] = {}
+    for place in [*existing_places, *places]:
+        key = f"{place.name.strip().lower()}::{place.city.strip().lower()}"
+        deduped[key] = place
+    merged_places = list(deduped.values())
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "Reddit Data API via PRAW",
+        "source": "Incremental Reddit extraction from API/public Reddit JSON",
         "snippet_count": len(snippets),
-        "places": [place.model_dump() for place in places],
+        "previous_place_count": len(existing_places),
+        "new_extracted_place_count": len(places),
+        "place_count": len(merged_places),
+        "places": [place.model_dump() for place in merged_places],
     }
     DATA_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return DATA_PATH
@@ -594,13 +612,32 @@ def save_raw_snippets(snippets: list[RedditSnippet]) -> Path:
         raise RuntimeError(
             "No Reddit snippets were collected; keeping existing reddit_raw_snippets.json."
         )
+    existing_snippets: list[RedditSnippet] = []
+    if RAW_SNIPPETS_PATH.exists():
+        existing_payload = json.loads(RAW_SNIPPETS_PATH.read_text(encoding="utf-8"))
+        existing_items = (
+            existing_payload.get("snippets", [])
+            if isinstance(existing_payload, dict)
+            else []
+        )
+        existing_snippets = [
+            RedditSnippet.model_validate(item)
+            for item in existing_items
+            if isinstance(item, dict)
+        ]
+    deduped: dict[str, RedditSnippet] = {}
+    for snippet in [*existing_snippets, *snippets]:
+        deduped[snippet.id] = snippet
+    merged_snippets = list(deduped.values())
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "Reddit Data API via PRAW",
-        "snippet_count": len(snippets),
-        "post_count": sum(1 for snippet in snippets if snippet.kind == "post"),
-        "comment_count": sum(1 for snippet in snippets if snippet.kind == "comment"),
-        "snippets": [snippet.model_dump() for snippet in snippets],
+        "source": "Incremental Reddit snippets from API/public Reddit JSON/PullPush",
+        "snippet_count": len(merged_snippets),
+        "previous_snippet_count": len(existing_snippets),
+        "new_snippet_count": len(snippets),
+        "post_count": sum(1 for snippet in merged_snippets if snippet.kind == "post"),
+        "comment_count": sum(1 for snippet in merged_snippets if snippet.kind == "comment"),
+        "snippets": [snippet.model_dump() for snippet in merged_snippets],
     }
     RAW_SNIPPETS_PATH.write_text(
         json.dumps(payload, indent=2, ensure_ascii=True),
@@ -650,7 +687,7 @@ def refresh_reddit_places(
         limit_per_query=limit_per_query,
         comment_limit=comment_limit,
     )
-    places = extract_places_with_openai(snippets)
+    places = extract_places_with_luxia(snippets)
     output_path = save_reddit_places(places, snippets)
     return {
         "snippet_count": len(snippets),
@@ -676,7 +713,7 @@ def refresh_reddit_dataset(
         time_filter=time_filter,
     )
     raw_output_path = save_raw_snippets(snippets)
-    places = extract_places_with_openai(snippets)
+    places = extract_places_with_luxia(snippets)
     places_output_path = save_reddit_places(places, snippets)
     return {
         "snippet_count": len(snippets),
@@ -691,7 +728,7 @@ def refresh_reddit_dataset(
 def refresh_manual_reddit_places(path: Path = MANUAL_SNIPPETS_PATH) -> dict:
     snippets = load_manual_reddit_snippets(path)
     raw_output_path = save_raw_snippets(snippets)
-    places = extract_places_with_openai(snippets)
+    places = extract_places_with_luxia(snippets)
     places_output_path = save_reddit_places(places, snippets)
     return {
         "snippet_count": len(snippets),
@@ -706,14 +743,16 @@ def refresh_public_thread_reddit_places(
     urls: list[str] | None = None,
     max_snippets: int = 500,
     comments_per_thread: int = 80,
+    request_delay_seconds: float = 1.5,
 ) -> dict:
     snippets = collect_public_thread_snippets(
         urls=urls or DEFAULT_REDDIT_THREAD_URLS,
         max_snippets=max_snippets,
         comments_per_thread=comments_per_thread,
+        request_delay_seconds=request_delay_seconds,
     )
     raw_output_path = save_raw_snippets(snippets)
-    places = extract_places_with_openai(snippets)
+    places = extract_places_with_luxia(snippets)
     places_output_path = save_reddit_places(places, snippets)
     return {
         "snippet_count": len(snippets),
@@ -734,27 +773,202 @@ def refresh_public_search_reddit_places(
     posts_per_query: int = 8,
     comments_per_thread: int = 40,
     time_filter: str = "all",
+    request_delay_seconds: float = 1.5,
 ) -> dict:
     urls = discover_public_reddit_thread_urls(
         subreddits=subreddits or DEFAULT_PUBLIC_SEARCH_SUBREDDITS,
         queries=queries or DEFAULT_PUBLIC_SEARCH_QUERIES,
         posts_per_query=posts_per_query,
         time_filter=time_filter,
+        request_delay_seconds=request_delay_seconds,
     )[:max_threads]
     result = refresh_public_thread_reddit_places(
         urls=urls,
         max_snippets=max_snippets,
         comments_per_thread=comments_per_thread,
+        request_delay_seconds=request_delay_seconds,
     )
     return {**result, "discovered_thread_count": len(urls)}
+
+
+def _pullpush_request(endpoint: str, params: dict) -> list[dict]:
+    url = (
+        f"https://api.pullpush.io/reddit/search/{endpoint}/?"
+        + urllib.parse.urlencode(params)
+    )
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "travelbuddy-france-local-recs/0.1"},
+    )
+    with urllib.request.urlopen(request, timeout=12) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    return payload.get("data", []) if isinstance(payload, dict) else []
+
+
+def collect_pullpush_snippets(
+    subreddits: list[str],
+    queries: list[str],
+    max_posts: int = 100,
+    max_comments: int = 100,
+    posts_per_query: int = 5,
+    comments_per_query: int = 5,
+    request_delay_seconds: float = 2.0,
+) -> list[RedditSnippet]:
+    snippets: list[RedditSnippet] = []
+    seen: set[str] = set()
+    post_count = 0
+    comment_count = 0
+
+    def add(snippet: RedditSnippet) -> None:
+        if snippet.id in seen or not _valid_text(snippet.text):
+            return
+        seen.add(snippet.id)
+        snippets.append(snippet)
+
+    for subreddit in subreddits:
+        for query in queries:
+            if post_count < max_posts:
+                try:
+                    submissions = _pullpush_request(
+                        "submission",
+                        {
+                            "subreddit": subreddit,
+                            "q": query,
+                            "size": min(posts_per_query, max_posts - post_count),
+                            "sort": "desc",
+                            "sort_type": "score",
+                        },
+                    )
+                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+                    submissions = []
+                for submission in submissions:
+                    permalink = submission.get("permalink", "")
+                    title = submission.get("title", "Reddit recommendation post")
+                    text = "\n\n".join(
+                        part
+                        for part in [title, submission.get("selftext", "")]
+                        if part and part not in {"[deleted]", "[removed]"}
+                    )
+                    add(
+                        RedditSnippet(
+                            id=f"pullpush_post_{submission.get('id', len(snippets))}",
+                            kind="post",
+                            subreddit=subreddit,
+                            title=title,
+                            text=text[:2500],
+                            score=int(submission.get("score", 0) or 0),
+                            permalink=(
+                                f"https://www.reddit.com{permalink}"
+                                if permalink.startswith("/")
+                                else permalink
+                            ),
+                            created_utc=float(submission.get("created_utc", 0) or 0),
+                            query=query,
+                        )
+                    )
+                    post_count += 1
+                    if post_count >= max_posts:
+                        break
+                time.sleep(request_delay_seconds)
+
+            if comment_count < max_comments:
+                try:
+                    comments = _pullpush_request(
+                        "comment",
+                        {
+                            "subreddit": subreddit,
+                            "q": query,
+                            "size": min(comments_per_query, max_comments - comment_count),
+                            "sort": "desc",
+                            "sort_type": "score",
+                        },
+                    )
+                except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+                    comments = []
+                for comment in comments:
+                    body = comment.get("body", "")
+                    permalink = comment.get("permalink", "")
+                    add(
+                        RedditSnippet(
+                            id=f"pullpush_comment_{comment.get('id', len(snippets))}",
+                            kind="comment",
+                            subreddit=subreddit,
+                            title=comment.get("link_title", "Reddit recommendation comment"),
+                            text=body[:2500],
+                            score=int(comment.get("score", 0) or 0),
+                            permalink=(
+                                f"https://www.reddit.com{permalink}"
+                                if permalink.startswith("/")
+                                else permalink
+                            ),
+                            created_utc=float(comment.get("created_utc", 0) or 0),
+                            query=query,
+                        )
+                    )
+                    comment_count += 1
+                    if comment_count >= max_comments:
+                        break
+                time.sleep(request_delay_seconds)
+
+            if post_count >= max_posts and comment_count >= max_comments:
+                return snippets
+
+    return snippets
+
+
+def refresh_pullpush_reddit_places(
+    subreddits: list[str] | None = None,
+    queries: list[str] | None = None,
+    max_posts: int = 100,
+    max_comments: int = 100,
+    posts_per_query: int = 5,
+    comments_per_query: int = 5,
+    request_delay_seconds: float = 2.0,
+    raw_only: bool = False,
+) -> dict:
+    snippets = collect_pullpush_snippets(
+        subreddits=subreddits or DEFAULT_PUBLIC_SEARCH_SUBREDDITS,
+        queries=queries or DEFAULT_PUBLIC_SEARCH_QUERIES,
+        max_posts=max_posts,
+        max_comments=max_comments,
+        posts_per_query=posts_per_query,
+        comments_per_query=comments_per_query,
+        request_delay_seconds=request_delay_seconds,
+    )
+    raw_output_path = save_raw_snippets(snippets)
+    if raw_only:
+        return {
+            "snippet_count": len(snippets),
+            "post_count": sum(1 for snippet in snippets if snippet.kind == "post"),
+            "comment_count": sum(1 for snippet in snippets if snippet.kind == "comment"),
+            "raw_output_path": str(raw_output_path),
+            "places_output_path": "",
+            "place_count": 0,
+            "raw_only": True,
+        }
+    places = extract_places_with_luxia(snippets)
+    places_output_path = save_reddit_places(places, snippets)
+    return {
+        "snippet_count": len(snippets),
+        "post_count": sum(1 for snippet in snippets if snippet.kind == "post"),
+        "comment_count": sum(1 for snippet in snippets if snippet.kind == "comment"),
+        "place_count": len(places),
+        "raw_output_path": str(raw_output_path),
+        "places_output_path": str(places_output_path),
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Refresh Reddit-derived France places.")
     parser.add_argument("--subreddits", default=",".join(DEFAULT_SUBREDDITS))
     parser.add_argument(
+        "--queries",
+        default="",
+        help="Optional comma-separated search queries. Defaults to the built-in France travel queries.",
+    )
+    parser.add_argument(
         "--mode",
-        choices=["legacy", "dataset", "manual", "urls", "public-search"],
+        choices=["legacy", "dataset", "manual", "urls", "public-search", "pullpush"],
         default="dataset",
         help="dataset stores individual posts/comments; legacy stores bundled post snippets.",
     )
@@ -771,6 +985,10 @@ def main() -> None:
     parser.add_argument("--comments-per-thread", type=int, default=80)
     parser.add_argument("--time-filter", default="all")
     parser.add_argument("--max-threads", type=int, default=40)
+    parser.add_argument("--max-posts", type=int, default=100)
+    parser.add_argument("--max-comments", type=int, default=100)
+    parser.add_argument("--request-delay-seconds", type=float, default=1.5)
+    parser.add_argument("--raw-only", action="store_true")
     parser.add_argument(
         "--urls",
         default="",
@@ -779,16 +997,30 @@ def main() -> None:
     args = parser.parse_args()
 
     subreddits = [item.strip() for item in args.subreddits.split(",") if item.strip()]
+    queries = [item.strip() for item in args.queries.split(",") if item.strip()]
     if args.mode == "manual":
         result = refresh_manual_reddit_places(Path(args.manual_file))
+    elif args.mode == "pullpush":
+        result = refresh_pullpush_reddit_places(
+            subreddits=subreddits or None,
+            queries=queries or None,
+            max_posts=args.max_posts,
+            max_comments=args.max_comments,
+            posts_per_query=args.posts_per_query,
+            comments_per_query=args.comments_per_post,
+            request_delay_seconds=args.request_delay_seconds,
+            raw_only=args.raw_only,
+        )
     elif args.mode == "public-search":
         result = refresh_public_search_reddit_places(
             subreddits=subreddits or None,
+            queries=queries or None,
             max_threads=args.max_threads,
             max_snippets=args.max_snippets,
             posts_per_query=args.posts_per_query,
             comments_per_thread=args.comments_per_thread,
             time_filter=args.time_filter,
+            request_delay_seconds=args.request_delay_seconds,
         )
     elif args.mode == "urls":
         urls = [item.strip() for item in args.urls.split(",") if item.strip()]
@@ -796,6 +1028,7 @@ def main() -> None:
             urls=urls or None,
             max_snippets=args.max_snippets,
             comments_per_thread=args.comments_per_thread,
+            request_delay_seconds=args.request_delay_seconds,
         )
     elif args.mode == "legacy":
         result = refresh_reddit_places(

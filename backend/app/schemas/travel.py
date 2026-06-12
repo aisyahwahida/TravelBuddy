@@ -36,6 +36,7 @@ class Place(BaseModel):
 class TravelIntent(BaseModel):
     destination: str
     duration_days: int = Field(default=1, ge=1, le=14)
+    request_intents: list[str] = Field(default_factory=list)
     interests: list[str] = Field(default_factory=list)
     avoid: list[str] = Field(default_factory=list)
     pace: str = "balanced"
@@ -43,6 +44,14 @@ class TravelIntent(BaseModel):
     budget: str = ""
     mood: str = ""
     travel_style: str = ""
+    group_type: str = ""
+    food_preference: str = ""
+    indoor_outdoor: str = ""
+    time_of_day: str = ""
+    transportation: str = ""
+    walking_constraints: str = ""
+    assumptions: list[str] = Field(default_factory=list)
+    clarification_question: str = ""
 
 
 class ItineraryDay(BaseModel):
@@ -83,6 +92,8 @@ class ChatResponse(BaseModel):
     itinerary: Itinerary
     session_id: str = ""
     evidence: list[EvidenceItem] = Field(default_factory=list)
+    alternative_options: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
 
 
 class ExportRequest(BaseModel):

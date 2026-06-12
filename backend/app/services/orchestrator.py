@@ -1,8 +1,12 @@
 from app.schemas.travel import ChatRequest, ChatResponse
 from app.services.extractor import extract_travel_intent
 from app.services.evidence import build_evidence
-from app.services.openai_planner import OpenAITravelPlanner
+from app.services.luxia_planner import LuxiaTravelPlanner
 from app.services.planner import build_itinerary, split_stops_by_day
+from app.services.response_formatter import (
+    build_alternative_options,
+    build_assistant_message,
+)
 from app.services.retriever import retrieve_places
 from app.services.session_store import ensure_session_id, save_chat_turn
 
@@ -59,7 +63,7 @@ def _message_with_context(request: ChatRequest) -> str:
 
 class TravelOrchestrator:
     def __init__(self) -> None:
-        self.ai_planner = OpenAITravelPlanner()
+        self.ai_planner = LuxiaTravelPlanner()
 
     def handle_chat(self, request: ChatRequest) -> ChatResponse:
         if not request.message.strip():
@@ -89,14 +93,18 @@ class TravelOrchestrator:
                     response.itinerary.stops, response.extracted_intent.duration_days
                 )
             response.evidence = build_evidence(response.itinerary.stops)
+            response.assumptions = response.extracted_intent.assumptions
+            response.alternative_options = build_alternative_options(places)
+            if response.extracted_intent.clarification_question:
+                response.assistant_message = (
+                    f"{response.assistant_message}\n\n"
+                    f"Quick follow-up: {response.extracted_intent.clarification_question}"
+                )
             save_chat_turn(request, response)
             return response
         except Exception:
             itinerary = build_itinerary(intent, places)
-            assistant_message = (
-                f"I built a {intent.destination}-focused plan from the local France dataset. "
-                "The AI planner was unavailable, so this response uses the deterministic fallback."
-            )
+            assistant_message = build_assistant_message(intent, itinerary, places)
 
             response = ChatResponse(
                 assistant_message=assistant_message,
@@ -104,6 +112,8 @@ class TravelOrchestrator:
                 itinerary=itinerary,
                 session_id=session_id,
                 evidence=build_evidence(itinerary.stops),
+                assumptions=intent.assumptions,
+                alternative_options=build_alternative_options(places),
             )
             save_chat_turn(request, response)
             return response

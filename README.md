@@ -28,8 +28,14 @@ recommendations; and saving local development chat sessions for later review.
 
 ## Backend
 
-The backend reads `OPENAI_API_KEY` from your environment. You can optionally set
-`OPENAI_MODEL`; otherwise it defaults to `gpt-5.2`.
+The backend uses Luxia for AI planning. Set `LUXIA_API_KEY` in your environment
+or local `.env` file. You can optionally set `LUXIA_BASE_URL`, `LUXIA_MODEL`,
+and `LUXIA_TIMEOUT_SECONDS`; defaults are shown in `.env.example`.
+
+```powershell
+$env:LUXIA_API_KEY="your_luxia_api_key"
+$env:LUXIA_MODEL="luxia3-llm-8b-0731"
+```
 
 For Reddit recommendation ingestion, also set:
 
@@ -69,7 +75,8 @@ Session endpoints:
 - `GET /api/sessions` lists saved local chat sessions.
 - `GET /api/sessions/{session_id}` returns a saved session with chat turns and the latest itinerary.
 
-Refresh Reddit-derived recommendations:
+Refresh Reddit-derived recommendations. This also uses Luxia to extract named
+France places from Reddit text:
 
 ```powershell
 python -m app.services.reddit_ingestion --mode dataset --max-snippets 500 --posts-per-query 25 --comments-per-post 15 --time-filter all

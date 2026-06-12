@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timedelta
 
 from app.schemas.travel import TravelIntent
+from app.services.preference_extractor import enrich_preferences
 
 
 KNOWN_DESTINATIONS = [
@@ -17,6 +18,15 @@ KNOWN_DESTINATIONS = [
 
 KNOWN_INTERESTS = [
     "food",
+    "lunch",
+    "dinner",
+    "eat",
+    "bar",
+    "bars",
+    "nightlife",
+    "romantic",
+    "family",
+    "kids",
     "mixed",
     "markets",
     "market",
@@ -125,6 +135,12 @@ WEEKDAYS = [
 ]
 
 
+def _contains_term(message: str, term: str) -> bool:
+    if " " in term or "-" in term:
+        return term in message
+    return bool(re.search(rf"\b{re.escape(term)}\b", message))
+
+
 def _extract_visit_day(message: str) -> str:
     lowered = message.lower()
     today = datetime.now()
@@ -192,11 +208,15 @@ def extract_travel_intent(message: str) -> TravelIntent:
     lowered = message.lower()
 
     destination = next(
-        ("France" if city == "france" else city.title() for city in KNOWN_DESTINATIONS if city in lowered),
+        (
+            "France" if city == "france" else city.title()
+            for city in KNOWN_DESTINATIONS
+            if _contains_term(lowered, city)
+        ),
         "Paris",
     )
 
-    interests = [item for item in KNOWN_INTERESTS if item in lowered]
+    interests = [item for item in KNOWN_INTERESTS if _contains_term(lowered, item)]
     if any(
         term in lowered
         for term in [
@@ -220,6 +240,14 @@ def extract_travel_intent(message: str) -> TravelIntent:
         interests.extend(["must_go", "first_time", "iconic", "landmarks"])
     if "things to do" in lowered or "what to do" in lowered:
         interests.extend(["activity", "events", "museum", "parks", "walks"])
+    if any(_contains_term(lowered, term) for term in ["rain", "rainy", "indoor", "inside"]):
+        interests.extend(["museum", "shopping", "cafes"])
+    if any(_contains_term(lowered, term) for term in ["romantic", "date", "couple", "sunset"]):
+        interests.extend(["restaurant", "restaurants", "wine", "views", "parks"])
+    if any(_contains_term(lowered, term) for term in ["family", "kids", "children"]):
+        interests.extend(["parks", "museum", "activity"])
+    if any(_contains_term(lowered, term) for term in ["lunch", "dinner", "eat"]):
+        interests.append("restaurant")
     if "cafe" in interests or "coffee" in interests or "coffee shops" in interests:
         interests = [
             item
@@ -233,6 +261,8 @@ def extract_travel_intent(message: str) -> TravelIntent:
         if f"{days} day" in lowered or f"{days}-day" in lowered:
             duration_days = days
             break
+    if "weekend" in lowered and duration_days == 1:
+        duration_days = 2
 
     if "slow" in lowered or "relaxed" in lowered:
         pace = "slow"
@@ -254,7 +284,7 @@ def extract_travel_intent(message: str) -> TravelIntent:
     must_go_request = "must_go" in interests
     avoid = [] if must_go_request else [item for item in KNOWN_AVOIDS if item in lowered]
 
-    return TravelIntent(
+    intent = TravelIntent(
         destination=destination,
         duration_days=duration_days,
         interests=interests or default_mixed_interests,
@@ -265,3 +295,4 @@ def extract_travel_intent(message: str) -> TravelIntent:
         mood=_extract_mood(message),
         travel_style=_extract_travel_style(message),
     )
+    return enrich_preferences(message, intent)

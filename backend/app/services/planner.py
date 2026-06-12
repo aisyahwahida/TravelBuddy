@@ -334,7 +334,8 @@ def build_itinerary(intent: TravelIntent, places: list[Place]) -> Itinerary:
     day_label = "1-day" if intent.duration_days == 1 else f"{intent.duration_days}-day"
     summary = (
         f"A {day_label} {intent.pace} itinerary in {intent.destination} "
-        f"focused on local-feeling spots and lighter tourist-trap exposure."
+        f"matching {', '.join(intent.request_intents or ['travel planning'])} with "
+        "route logic, meal breaks, and evidence-backed stops."
     )
     avoidance_notes = [
         "Prioritized places with lower tourist-trap risk.",
@@ -363,5 +364,6 @@ def build_itinerary(intent: TravelIntent, places: list[Place]) -> Itinerary:
             "Lunch is planned around 12:30 and dinner around 19:00 when suitable food stops are available.",
             "Open each stop on the map before leaving so transit choices stay realistic.",
             "Treat market timings as flexible; many local markets are strongest in the morning.",
+            *intent.assumptions,
         ],
     )
