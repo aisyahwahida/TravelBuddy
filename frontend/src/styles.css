@@ -222,7 +222,7 @@ textarea { font-family: inherit; }
 }
 .summary-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .summary h1 {
-  margin: 0; font-family: var(--serif); font-size: 46px; font-weight: 600;
+  margin: 0; font-family: var(--sans); font-size: 40px; font-weight: 700;
   letter-spacing: 0; line-height: .98;
 }
 .summary .loc-sub { display: flex; align-items: center; gap: 9px; margin-top: 9px; color: var(--ink-3); font-size: 13px; }
@@ -262,7 +262,7 @@ textarea { font-family: inherit; }
   color: #fff; background: var(--green); border-radius: 7px; padding: 6px 10px;
   box-shadow: inset 0 0 0 1.4px rgba(255,255,255,.9);
 }
-.day-title { font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+.day-title { font-family: var(--sans); font-size: 18px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
 .day-sub { font-size: 12.5px; color: var(--ink-3); margin-left: auto; font-family: var(--mono); letter-spacing: .02em; }
 
 .stop-list { display: flex; flex-direction: column; gap: 10px; }
@@ -330,13 +330,13 @@ textarea { font-family: inherit; }
   gap: 14px; min-height: 60vh; text-align: center; color: var(--ink-3);
 }
 .plan-empty svg { color: var(--ink-4); }
-.plan-empty h2 { font-family: var(--serif); font-size: 26px; font-weight: 600; margin: 0; color: var(--ink-2); }
+.plan-empty h2 { font-family: var(--sans); font-size: 22px; font-weight: 700; margin: 0; color: var(--ink-2); }
 .plan-empty p { font-size: 14px; margin: 0; max-width: 28ch; color: var(--ink-3); }
 
 /* alternatives */
 .alts { margin-top: 42px; padding-top: 26px; border-top: 1px solid var(--line); }
 .alts-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.alts-head h3 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; }
+.alts-head h3 { margin: 0; font-family: var(--sans); font-size: 16px; font-weight: 700; }
 .alts-head .hint { font-size: 12px; color: var(--ink-3); margin-left: auto; }
 .alts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
 .alt {
@@ -351,15 +351,61 @@ textarea { font-family: inherit; }
 .alt-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
 .alt-name { font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .alt-reason { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.swap-btn {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px;
-  height: 28px; padding: 0 10px;
-  border-radius: 8px; border: 1px solid var(--line);
-  font-size: 11.5px; font-weight: 600; color: var(--ink-2);
-  background: var(--surface-2); transition: .15s;
+/* drag & drop */
+.stop.drag-over {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-soft), var(--shadow);
+  background: var(--gold-soft);
 }
-.swap-btn:hover { border-color: var(--green); color: var(--green); }
-.swap-btn svg { width: 12px; height: 12px; }
+.alt[draggable] { cursor: grab; }
+.alt[draggable]:active { cursor: grabbing; opacity: .75; }
+.alt-drag-handle { cursor: inherit; }
+.drag-hint {
+  flex: 0 0 auto;
+  font-family: var(--mono); font-size: 9.5px;
+  color: var(--ink-4); letter-spacing: .04em;
+  padding: 0 4px;
+}
+
+/* session history panel */
+.history-panel {
+  flex: 0 0 auto; max-height: 260px; overflow-y: auto;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  display: flex; flex-direction: column;
+}
+.hist-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 8px; border-bottom: 1px solid var(--line-2);
+  position: sticky; top: 0; background: var(--surface-2); z-index: 1;
+}
+.hist-empty {
+  padding: 18px 16px; font-family: var(--mono); font-size: 11px;
+  color: var(--ink-4); text-align: center;
+}
+.hist-session {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 9px 16px; border-bottom: 1px solid var(--line-2);
+  text-align: left; width: 100%; transition: .13s; position: relative;
+  cursor: pointer;
+}
+.hist-session:hover { background: var(--green-soft); }
+.hist-session.active { background: var(--green-soft); }
+.hist-title {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 20px;
+}
+.hist-meta {
+  font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: .02em;
+}
+.hist-del {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center;
+  color: var(--ink-4); transition: .13s; opacity: 0;
+}
+.hist-session:hover .hist-del { opacity: 1; }
+.hist-del:hover { background: #fee; color: #c4453a; }
 
 /* ============================================================
    COLUMN 3 — MAP

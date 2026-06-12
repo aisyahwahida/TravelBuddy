@@ -21,34 +21,31 @@ def build_assistant_message(
     itinerary: Itinerary,
     places: list[Place],
 ) -> str:
-    intent_text = ", ".join(intent.request_intents or ["itinerary"])
-    assumption_text = (
-        " Assumptions: " + " ".join(intent.assumptions)
-        if intent.assumptions
-        else ""
-    )
+    days = len(itinerary.days) if itinerary.days else 1
+    destination = itinerary.destination or intent.destination or "your destination"
+    stop_count = sum(len(d.stops) for d in itinerary.days) if itinerary.days else len(itinerary.stops)
+    evidence_count = sum(1 for place in places if place.source_url)
+
+    day_label = "day" if days == 1 else "days"
+    intro = f"Here's your {days}-{day_label} plan for {destination} — {stop_count} stops backed by {evidence_count} real sources."
+
+    budget_note = ""
+    if intent.budget and intent.budget.lower() in ("low", "budget", "cheap"):
+        budget_note = " I've kept it affordable with free sights, markets, and budget-friendly spots."
+    elif intent.budget and intent.budget.lower() in ("high", "luxury"):
+        budget_note = " I've focused on higher-end experiences to match your budget."
+
     clarification = (
-        f" Quick check: {intent.clarification_question}"
+        f" One thing to check: {intent.clarification_question}"
         if intent.clarification_question
         else ""
     )
-    route_logic = (
-        "Route logic: days are grouped by theme and each day keeps lunch/dinner "
-        "between activities where food candidates are available."
-    )
-    evidence_count = sum(1 for place in places if place.source_url)
-    cost_examples = "; ".join(
-        f"{place.name}: {_cost_hint(place)}" for place in places[:4]
-    )
-    alternatives = ", ".join(place.name for place in places[4:7])
 
-    return (
-        f"{itinerary.summary} Request type detected: {intent_text}. "
-        f"{route_logic} Estimated cost guidance: {cost_examples or 'check current prices'}. "
-        f"Evidence: {evidence_count} selected stops include community, map, official, or curated source links. "
-        f"Alternatives to swap in: {alternatives or 'ask for a different mood, budget, or area'}. "
-        f"{assumption_text}{clarification}"
-    ).strip()
+    assumption_note = ""
+    if intent.assumptions:
+        assumption_note = f" I assumed: {intent.assumptions[0].lower()}."
+
+    return (intro + budget_note + assumption_note + clarification).strip()
 
 
 def build_alternative_options(

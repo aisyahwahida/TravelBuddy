@@ -1,4 +1,29 @@
+from __future__ import annotations
+import math
 from app.schemas.travel import Itinerary, ItineraryDay, Place, TravelIntent
+
+
+def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Return approximate distance in km between two lat/lon points."""
+    r = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _nearest_neighbor_sort(stops: list[Place]) -> list[Place]:
+    """Sort stops using nearest-neighbor to minimise total walking distance."""
+    if len(stops) <= 2:
+        return stops
+    remaining = list(stops)
+    ordered = [remaining.pop(0)]
+    while remaining:
+        last = ordered[-1]
+        nearest = min(remaining, key=lambda s: _haversine(last.latitude, last.longitude, s.latitude, s.longitude))
+        ordered.append(nearest)
+        remaining.remove(nearest)
+    return ordered
 
 
 def _tags(place: Place) -> set[str]:
@@ -304,16 +329,26 @@ def split_stops_by_day(
     for index, meal in enumerate(meals):
         day_stops[index % day_count].append(meal)
 
+    MIN_STOPS_PER_DAY = 4
     days: list[ItineraryDay] = []
     for index, stops_for_day in enumerate(day_stops):
         if not stops_for_day:
             continue
         theme = _day_theme_for(index, stops_for_day)
+        geo_sorted = _nearest_neighbor_sort(stops_for_day)
         scheduled_stops = _schedule_day_stops(
-            stops_for_day,
-            force_full_day=force_full_day,
+            geo_sorted,
+            force_full_day=True,
             theme_matcher=theme["matcher"],
         )
+        # Pad with any remaining unique stops if below minimum
+        if len(scheduled_stops) < MIN_STOPS_PER_DAY:
+            used_names = {s.name for s in scheduled_stops}
+            extras = [s for s in unique_stops if s.name not in used_names]
+            for extra in extras:
+                if len(scheduled_stops) >= MIN_STOPS_PER_DAY:
+                    break
+                scheduled_stops.append(extra)
         days.append(ItineraryDay(
             day=index + 1,
             title=f"Day {index + 1} - {theme['label']}",

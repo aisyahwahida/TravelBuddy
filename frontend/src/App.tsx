@@ -1,19 +1,20 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
-  ArrowLeftRight,
   Bus,
   ChevronRight,
   Clock,
   Download,
   ExternalLink,
   Footprints,
+  History,
   LoaderCircle,
   MapPin,
   Plus,
   Sparkles,
   Navigation,
   Timer,
+  X,
 } from "lucide-react";
 import type { AlternativePlace, ChatResponse, Place } from "./types";
 import GoogleMap from "./GoogleMap";
@@ -40,12 +41,24 @@ type ChatMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; content: string; response?: ChatResponse };
 
+type DaySection = { day: number; title: string; summary: string; stops: Place[] };
+
 type RouteSegment = {
   from: Place;
   to: Place;
   distanceKm: number;
   mode: "Walk" | "Metro or bus";
   minutes: number;
+};
+
+type SavedSession = {
+  id: string;
+  title: string;
+  timestamp: number;
+  messages: ChatMessage[];
+  result: ChatResponse;
+  planDays: DaySection[];
+  planAlts: AlternativePlace[];
 };
 
 function haversineKm(from: Place, to: Place) {
@@ -143,6 +156,65 @@ function createSessionId() {
   return globalThis.crypto?.randomUUID?.() ?? String(Date.now());
 }
 
+function loadSessions(): SavedSession[] {
+  try {
+    return JSON.parse(localStorage.getItem("travelbuddy_sessions") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function persistSessions(sessions: SavedSession[]) {
+  localStorage.setItem("travelbuddy_sessions", JSON.stringify(sessions));
+}
+
+function altToPlace(alt: AlternativePlace, template: Place): Place {
+  return {
+    ...template,
+    name: alt.name,
+    category: alt.category,
+    city: alt.city,
+    neighborhood: "",
+    address: "",
+    reason: alt.reason,
+    local_tip: alt.local_tip,
+    tourist_trap_risk: alt.tourist_trap_risk,
+    source_url: alt.source_url,
+    source_type: "",
+    source_title: "",
+    latitude: alt.latitude,
+    longitude: alt.longitude,
+    google_rating: null,
+    google_user_rating_count: null,
+    google_maps_url: "",
+    google_price_label: "",
+    google_price_level: "",
+    open_status_label: "",
+    photo_name: "",
+    map_url: "",
+    opening_hours: [],
+    open_now: null,
+    business_status: "",
+    confidence: 0,
+    price_label: "",
+    tags: [],
+  };
+}
+
+function placeToAlt(place: Place): AlternativePlace {
+  return {
+    name: place.name,
+    category: place.category,
+    city: place.city,
+    reason: place.reason,
+    local_tip: place.local_tip,
+    tourist_trap_risk: place.tourist_trap_risk,
+    source_url: place.source_url,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  };
+}
+
 const WELCOME: ChatMessage = {
   role: "assistant",
   content:
@@ -156,6 +228,8 @@ export default function App() {
   );
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
   const [result, setResult] = useState<ChatResponse | null>(null);
+  const [planDays, setPlanDays] = useState<DaySection[]>([]);
+  const [planAlts, setPlanAlts] = useState<AlternativePlace[]>([]);
   const [selectedStopIndex, setSelectedStopIndex] = useState(0);
   const [selectedMapDayIndex, setSelectedMapDayIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"Map" | "Route" | "Transit">("Map");
@@ -163,14 +237,12 @@ export default function App() {
   const [loadingMessage, setLoadingMessage] = useState("Planning…");
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [savedSessions, setSavedSessions] = useState<SavedSession[]>(loadSessions);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
-  const mapDaySections =
-    result?.itinerary.days?.length
-      ? result.itinerary.days
-      : result
-        ? [{ day: 1, title: "Day 1", summary: "", stops: result.itinerary.stops }]
-        : [];
+  const mapDaySections = planDays;
 
   const activeMapDay =
     mapDaySections[Math.min(selectedMapDayIndex, Math.max(mapDaySections.length - 1, 0))];
@@ -192,13 +264,55 @@ export default function App() {
       ]
     : [];
 
-  const dayStartIndex = mapDaySections
-    .slice(0, selectedMapDayIndex)
-    .reduce((sum, d) => sum + d.stops.length, 0);
+  const dayStartIndex = 0;
 
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  function saveSession(
+    sid: string,
+    msgs: ChatMessage[],
+    res: ChatResponse,
+    days: DaySection[],
+    alts: AlternativePlace[]
+  ) {
+    const session: SavedSession = {
+      id: sid,
+      title: res.extracted_intent.destination || "Untitled",
+      timestamp: Date.now(),
+      messages: msgs,
+      result: res,
+      planDays: days,
+      planAlts: alts,
+    };
+    setSavedSessions((prev) => {
+      const updated = [session, ...prev.filter((s) => s.id !== sid)].slice(0, 20);
+      persistSessions(updated);
+      return updated;
+    });
+  }
+
+  function restoreSession(session: SavedSession) {
+    setSessionId(session.id);
+    setMessages(session.messages);
+    setResult(session.result);
+    setPlanDays(session.planDays);
+    setPlanAlts(session.planAlts);
+    setSelectedStopIndex(0);
+    setSelectedMapDayIndex(0);
+    setError(null);
+    setShowHistory(false);
+  }
+
+  function deleteSession(sid: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setSavedSessions((prev) => {
+      const updated = prev.filter((s) => s.id !== sid);
+      persistSessions(updated);
+      return updated;
+    });
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -245,14 +359,25 @@ export default function App() {
               setLoadingMessage(data.message);
             } else if (currentEvent === "result") {
               const chat = data as ChatResponse;
-              setSessionId(chat.session_id || sessionId);
+              const sid = chat.session_id || sessionId;
+              const days: DaySection[] = chat.itinerary.days?.length
+                ? chat.itinerary.days
+                : [{ day: 1, title: "Day 1", summary: "", stops: chat.itinerary.stops }];
+              const alts = chat.alternative_options || [];
+              setSessionId(sid);
               setResult(chat);
+              setPlanDays(days);
+              setPlanAlts(alts);
               setSelectedStopIndex(0);
               setSelectedMapDayIndex(0);
-              setMessages((prev) => [
-                ...prev,
-                { role: "assistant", content: chat.assistant_message, response: chat },
-              ]);
+              setMessages((prev) => {
+                const next = [
+                  ...prev,
+                  { role: "assistant" as const, content: chat.assistant_message, response: chat },
+                ];
+                saveSession(sid, next, chat, days, alts);
+                return next;
+              });
             } else if (currentEvent === "error") {
               setError(data.message ?? "Unexpected error.");
             }
@@ -272,6 +397,8 @@ export default function App() {
     setMessage("");
     setMessages([WELCOME]);
     setResult(null);
+    setPlanDays([]);
+    setPlanAlts([]);
     setSelectedStopIndex(0);
     setSelectedMapDayIndex(0);
     setError(null);
@@ -296,19 +423,23 @@ export default function App() {
     }
   }
 
-  function handleSwap(alt: AlternativePlace) {
-    setMessage(`Swap ${alt.name} into my plan`);
+  function handleDrop(alt: AlternativePlace, dayIndex: number, stopIndex: number) {
+    setPlanDays((prev) => {
+      const days = prev.map((d) => ({ ...d, stops: [...d.stops] }));
+      const replaced = days[dayIndex].stops[stopIndex];
+      days[dayIndex].stops[stopIndex] = altToPlace(alt, replaced);
+      setPlanAlts((prevAlts) => [
+        placeToAlt(replaced),
+        ...prevAlts.filter((a) => a.name !== alt.name),
+      ]);
+      return days;
+    });
   }
 
   function handleSelectStop(dayIndex: number, stopIndex: number) {
     setSelectedMapDayIndex(dayIndex);
     setSelectedStopIndex(stopIndex);
   }
-
-  const suggestText =
-    result?.alternative_options?.[0]
-      ? `Swap ${result.alternative_options[0].name} into the plan`
-      : null;
 
   return (
     <div className="app">
@@ -325,11 +456,62 @@ export default function App() {
               </div>
             </div>
           </div>
-          <button className="icon-btn" type="button" onClick={handleNewChat} disabled={loading}>
-            <Plus size={13} />
-            New trip
-          </button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              className="icon-btn"
+              type="button"
+              onClick={() => setShowHistory((v) => !v)}
+              title="Session history"
+            >
+              <History size={13} />
+            </button>
+            <button className="icon-btn" type="button" onClick={handleNewChat} disabled={loading}>
+              <Plus size={13} />
+              New trip
+            </button>
+          </div>
         </header>
+
+        {/* History panel */}
+        {showHistory && (
+          <div className="history-panel scroll">
+            <div className="hist-head">
+              <span className="eyebrow">Recent sessions</span>
+              <button className="icon-btn" style={{ height: 26, padding: "0 8px" }} onClick={() => setShowHistory(false)}>
+                <X size={12} />
+              </button>
+            </div>
+            {savedSessions.length === 0 ? (
+              <div className="hist-empty">No saved sessions yet</div>
+            ) : (
+              savedSessions.map((sess) => (
+                <button
+                  key={sess.id}
+                  className={`hist-session${sess.id === sessionId ? " active" : ""}`}
+                  type="button"
+                  onClick={() => restoreSession(sess)}
+                >
+                  <span className="hist-title">{sess.title}</span>
+                  <span className="hist-meta">
+                    {new Date(sess.timestamp).toLocaleDateString("en-GB", {
+                      day: "numeric", month: "short", year: "numeric",
+                    })}
+                    {" · "}
+                    {sess.planDays.reduce((n, d) => n + d.stops.length, 0)} stops
+                  </span>
+                  <button
+                    className="hist-del"
+                    type="button"
+                    onClick={(e) => deleteSession(sess.id, e)}
+                    title="Delete"
+                  >
+                    <X size={10} />
+                  </button>
+                </button>
+              ))
+            )}
+          </div>
+        )}
 
         <div className="chat-feed scroll" ref={feedRef}>
           {messages.map((msg, i) => (
@@ -384,21 +566,11 @@ export default function App() {
         </div>
 
         <footer className="chat-input">
-          {suggestText && !loading && (
-            <button
-              className="suggest"
-              type="button"
-              onClick={() => setMessage(suggestText)}
-            >
-              <Sparkles size={12} />
-              {suggestText}
-            </button>
-          )}
           <div className="input-wrap">
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder='Refine your plan — e.g. "swap stop 4 for something cheaper"…'
+              placeholder='Refine your plan — e.g. "more street food stops", "fewer museums"…'
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
@@ -505,12 +677,23 @@ export default function App() {
                           const isActive =
                             dayIndex === selectedMapDayIndex && stopIndex === selectedStopIndex;
                           const seg = daySegments[stopIndex];
+                          const dropKey = `${dayIndex}-${stopIndex}`;
                           return (
                             <button
                               key={`${stop.name}-${stopIndex}`}
-                              className={`stop${isActive ? " active" : ""}`}
+                              className={`stop${isActive ? " active" : ""}${dragOver === dropKey ? " drag-over" : ""}`}
                               type="button"
                               onClick={() => handleSelectStop(dayIndex, stopIndex)}
+                              onDragOver={(e) => { e.preventDefault(); setDragOver(dropKey); }}
+                              onDragLeave={() => setDragOver(null)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setDragOver(null);
+                                try {
+                                  const alt: AlternativePlace = JSON.parse(e.dataTransfer.getData("text/plain"));
+                                  handleDrop(alt, dayIndex, stopIndex);
+                                } catch {}
+                              }}
                             >
                               <span className="stop-num">{stopIndex + 1}</span>
                               <PlacePhoto photoName={stop.photo_name} alt={stop.name} className="stop-img" />
@@ -581,16 +764,24 @@ export default function App() {
                 })}
               </div>
 
-              {result.alternative_options?.length > 0 && (
+              {planAlts.length > 0 && (
                 <section className="alts">
                   <div className="alts-head">
                     <h3>Alternative places</h3>
-                    <span className="hint">Tap swap to drop one into the plan</span>
+                    <span className="hint">Drag any card onto a stop to swap it in</span>
                   </div>
                   <div className="alts-grid">
-                    {result.alternative_options.slice(0, 4).map((alt) => (
-                      <div className="alt" key={`${alt.name}-${alt.city}`}>
-                        <span className="alt-img" />
+                    {planAlts.slice(0, 4).map((alt, idx) => (
+                      <div
+                        className="alt"
+                        key={`${alt.name}-${alt.city}-${idx}`}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", JSON.stringify(alt));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                      >
+                        <span className="alt-img alt-drag-handle" title="Drag to swap" />
                         <span className="alt-body">
                           <span className={`cat-chip${isMuseumCategory(alt.category) ? " museum" : ""}`}>
                             {alt.category || "Place"}
@@ -598,14 +789,9 @@ export default function App() {
                           <span className="alt-name">{alt.name}</span>
                           {alt.reason && <span className="alt-reason">{alt.reason}</span>}
                         </span>
-                        <button
-                          className="swap-btn"
-                          type="button"
-                          onClick={() => handleSwap(alt)}
-                        >
-                          <ArrowLeftRight size={12} />
-                          Swap
-                        </button>
+                        <span className="drag-hint">
+                          ↕ drag
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -797,9 +983,9 @@ export default function App() {
 
 // ─── Route tab ────────────────────────────────────────────────────────────────
 
-type DaySection = { day: number; title: string; summary: string; stops: Place[] };
+type DaySection2 = { day: number; title: string; summary: string; stops: Place[] };
 
-function RoutePanel({ days }: { days: DaySection[] }) {
+function RoutePanel({ days }: { days: DaySection2[] }) {
   if (!days.length) {
     return (
       <div className="tab-panel scroll tab-empty">
@@ -823,7 +1009,6 @@ function RoutePanel({ days }: { days: DaySection[] }) {
 
   return (
     <div className="tab-panel scroll">
-      {/* summary strip */}
       <div className="route-summary">
         <div className="route-stat">
           <span className="route-stat-val">{totalWalk}<span>min</span></span>
@@ -845,7 +1030,7 @@ function RoutePanel({ days }: { days: DaySection[] }) {
             <span className="day-no" style={{ fontSize: 9, padding: "4px 8px" }}>
               Jour {day.day}
             </span>
-            <span style={{ fontFamily: "var(--serif)", fontSize: 16, fontWeight: 600 }}>
+            <span style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 600 }}>
               {day.title || `Day ${day.day}`}
             </span>
             <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--ink-3)", marginLeft: "auto" }}>
@@ -894,7 +1079,7 @@ function toHHMM(minutesFromMidnight: number) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function TransitPanel({ days }: { days: DaySection[] }) {
+function TransitPanel({ days }: { days: DaySection2[] }) {
   if (!days.length) {
     return (
       <div className="tab-panel scroll tab-empty">
@@ -908,7 +1093,7 @@ function TransitPanel({ days }: { days: DaySection[] }) {
     <div className="tab-panel scroll">
       {days.map((day) => {
         const segs = buildSegments(day.stops);
-        let clock = 9 * 60; // 09:00
+        let clock = 9 * 60;
 
         return (
           <div className="transit-day" key={day.day}>
@@ -916,7 +1101,7 @@ function TransitPanel({ days }: { days: DaySection[] }) {
               <span className="day-no" style={{ fontSize: 9, padding: "4px 8px" }}>
                 Jour {day.day}
               </span>
-              <span style={{ fontFamily: "var(--serif)", fontSize: 16, fontWeight: 600 }}>
+              <span style={{ fontFamily: "var(--sans)", fontSize: 16, fontWeight: 600 }}>
                 {day.title || `Day ${day.day}`}
               </span>
             </div>
@@ -931,7 +1116,6 @@ function TransitPanel({ days }: { days: DaySection[] }) {
 
                 return (
                   <div key={`${stop.name}-${i}`}>
-                    {/* stop waypoint */}
                     <div className="tl-stop">
                       <div className="tl-time">{toHHMM(arrivalTime)}</div>
                       <div className="tl-dot-col">
@@ -952,7 +1136,6 @@ function TransitPanel({ days }: { days: DaySection[] }) {
                       </div>
                     </div>
 
-                    {/* travel leg to next */}
                     {seg && (
                       <div className="tl-leg">
                         <div className="tl-time tl-time-sm">{toHHMM(departTime)}</div>
@@ -971,7 +1154,6 @@ function TransitPanel({ days }: { days: DaySection[] }) {
                 );
               })}
 
-              {/* end marker */}
               {day.stops.length > 0 && (
                 <div className="tl-stop tl-end">
                   <div className="tl-time">{toHHMM(clock)}</div>
