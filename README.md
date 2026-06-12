@@ -189,7 +189,8 @@ sudo systemctl stop travelbuddy
 cd ~ && rm -rf backend_new && mkdir backend_new && unzip -q backend_v2.zip -d backend_new
 rm -rf backend_old && mv backend backend_old && mv backend_new backend
 sudo chown -R ec2-user:ec2-user ~/backend
-sudo systemctl start travelbuddy
+# Recreate the credentials file (it lives inside the backend folder)
+bash ~/refresh_creds.sh <AccessKey> <SecretKey>
 ```
 
 ### Deploying frontend changes
