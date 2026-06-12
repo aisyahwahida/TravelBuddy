@@ -153,7 +153,15 @@ The production deployment runs on:
 | Backend   | EC2 t3.small (Amazon Linux 2023) | `http://18.232.4.103:8000` |
 | Sessions  | DynamoDB table `travelbuddy-sessions` | us-east-1 |
 
-> **Note:** The AWS Academy Learner Lab resets all resources (EC2, Elastic IP, S3) when budget runs out or a new account is issued. If the backend is unreachable, follow the "Rebuilding from scratch" section below.
+> **What gets wiped when the Academy account resets:**
+> - EC2 instance and Elastic IP — backend goes offline, new IP needed
+> - S3 bucket — frontend URL changes, new bucket needed
+> - DynamoDB table — all backend sessions lost
+>
+> **What survives:**
+> - Browser localStorage — the session history panel in the UI still works (saved in the user's browser, not AWS)
+>
+> If the backend is unreachable or the frontend shows "Load failed", follow the "Rebuilding from scratch" section below.
 
 ---
 
