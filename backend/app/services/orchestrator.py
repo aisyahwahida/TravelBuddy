@@ -6,6 +6,7 @@ from app.services.planner import build_itinerary, split_stops_by_day
 from app.services.response_formatter import (
     build_alternative_options,
     build_assistant_message,
+    clean_assistant_message,
 )
 from app.services.retriever import retrieve_places
 from app.services.session_store import ensure_session_id, save_chat_turn
@@ -100,11 +101,14 @@ class TravelOrchestrator:
                     f"{response.assistant_message}\n\n"
                     f"Quick follow-up: {response.extracted_intent.clarification_question}"
                 )
+            response.assistant_message = clean_assistant_message(response.assistant_message)
             save_chat_turn(request, response)
             return response
         except Exception:
             itinerary = build_itinerary(intent, places)
-            assistant_message = build_assistant_message(intent, itinerary, places)
+            assistant_message = clean_assistant_message(
+                build_assistant_message(intent, itinerary, places)
+            )
 
             response = ChatResponse(
                 assistant_message=assistant_message,

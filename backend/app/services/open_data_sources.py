@@ -116,7 +116,7 @@ def _record_to_place(record: dict) -> dict | None:
         "map_source": "Paris Open Data",
         "map_url": url,
         "price_label": price_label,
-        "google_maps_url": f"https://www.openstreetmap.org/?mlat={latitude}&mlon={longitude}#map=18/{latitude}/{longitude}",
+        "google_maps_url": f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}",
         "business_status": "",
         "opening_hours": [date_text] if date_text else [],
         "open_now": None,

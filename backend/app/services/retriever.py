@@ -8,8 +8,6 @@ from app.services.semantic_retrieval import semantic_scores
 
 REDDIT_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "reddit_places.json"
 GOOGLE_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "google_places.json"
-OSM_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "osm_places.json"
-OSM_POI_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "osm_poi_places.json"
 OPEN_DATA_PLACES_PATH = (
     Path(__file__).resolve().parents[1] / "data" / "open_data_places.json"
 )
@@ -20,6 +18,55 @@ MUST_GO_PLACES_PATH = (
 
 def _google_maps_url(latitude: float, longitude: float, name: str) -> str:
     return f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
+
+
+def _google_maps_url_for_place(place: dict) -> str:
+    existing_url = str(place.get("google_maps_url", "") or place.get("map_url", "")).strip()
+    if existing_url.startswith("https://www.google.com/maps"):
+        return existing_url
+
+    latitude = place.get("latitude")
+    longitude = place.get("longitude")
+    if latitude is not None and longitude is not None:
+        return _google_maps_url(latitude, longitude, place.get("name", ""))
+
+    query_parts = [
+        place.get("name", ""),
+        place.get("address", ""),
+        place.get("neighborhood", ""),
+        place.get("city", ""),
+        "France",
+    ]
+    query = ",".join(part for part in query_parts if part)
+    return f"https://www.google.com/maps/search/?api=1&query={query}"
+
+
+def _sanitize_source_metadata(place: dict) -> dict:
+    google_maps_url = _google_maps_url_for_place(place)
+    source_type = place.get("source_type", "") or "curated"
+    source_title = place.get("source_title", "")
+    source_url = place.get("source_url", "")
+
+    if source_type == "openstreetmap":
+        source_type = "google_maps"
+        source_title = "Google Maps location search"
+        source_url = google_maps_url
+    elif source_type == "curated" and not source_title:
+        source_title = "Curated TravelBuddy place reference"
+
+    return {
+        **place,
+        "map_source": "Google Maps",
+        "map_url": google_maps_url,
+        "google_maps_url": google_maps_url,
+        "source_type": source_type,
+        "source_title": source_title,
+        "source_url": source_url,
+    }
+
+
+def _is_permanently_closed(place: dict) -> bool:
+    return str(place.get("business_status", "")).upper() == "CLOSED_PERMANENTLY"
 
 
 def _load_reddit_places() -> list[dict]:
@@ -54,44 +101,12 @@ def _load_google_places() -> dict[str, dict]:
     }
 
 
-def _load_osm_places() -> dict[str, dict]:
-    if not OSM_PLACES_PATH.exists():
-        return {}
-
-    try:
-        payload = json.loads(OSM_PLACES_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-
-    places = payload.get("places", []) if isinstance(payload, dict) else []
-    return {
-        f"{place.get('name', '').lower()}::{place.get('city', '').lower()}": place
-        for place in places
-    }
-
-
 def _load_open_data_places() -> list[dict]:
     if not OPEN_DATA_PLACES_PATH.exists():
         return []
 
     try:
         payload = json.loads(OPEN_DATA_PLACES_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return []
-
-    if isinstance(payload, dict):
-        return payload.get("places", [])
-    if isinstance(payload, list):
-        return payload
-    return []
-
-
-def _load_osm_poi_places() -> list[dict]:
-    if not OSM_POI_PLACES_PATH.exists():
-        return []
-
-    try:
-        payload = json.loads(OSM_POI_PLACES_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return []
 
@@ -120,42 +135,15 @@ def _load_must_go_places() -> list[dict]:
 
 def _all_places(include_must_go: bool = False) -> list[dict]:
     google_places = _load_google_places()
-    osm_places = _load_osm_places()
     merged: list[dict] = []
 
     for place in [
         *FRANCE_PLACES,
         *_load_reddit_places(),
         *_load_open_data_places(),
-        *_load_osm_poi_places(),
         *(_load_must_go_places() if include_must_go else []),
     ]:
         key = f"{place.get('name', '').lower()}::{place.get('city', '').lower()}"
-        osm_match = osm_places.get(key)
-        if osm_match:
-            place = {
-                **place,
-                "neighborhood": osm_match.get("neighborhood")
-                or place.get("neighborhood", ""),
-                "address": osm_match.get("display_name")
-                or place.get("address", ""),
-                "category": osm_match.get("category") or place.get("category", ""),
-                "latitude": osm_match.get("latitude", place.get("latitude")),
-                "longitude": osm_match.get("longitude", place.get("longitude")),
-                "google_maps_url": osm_match.get("map_url")
-                or place.get("google_maps_url", ""),
-                "map_source": "OpenStreetMap",
-                "map_url": osm_match.get("map_url", ""),
-                "price_label": osm_match.get("price_label", ""),
-                "business_status": osm_match.get("business_status", ""),
-                "opening_hours": osm_match.get("opening_hours", []),
-                "open_now": osm_match.get("open_now"),
-                "source_type": "openstreetmap",
-                "source_title": osm_match.get(
-                    "source_title", "OpenStreetMap place details"
-                ),
-                "source_url": osm_match.get("source_url", ""),
-            }
         google_match = google_places.get(key)
         if google_match:
             place = {
@@ -177,7 +165,7 @@ def _all_places(include_must_go: bool = False) -> list[dict]:
                 "opening_hours": google_match.get("opening_hours", []),
                 "open_now": google_match.get("open_now"),
             }
-        merged.append(place)
+        merged.append(_sanitize_source_metadata(place))
 
     return merged
 
@@ -586,7 +574,7 @@ def _rank_meal_candidates(candidates: list[dict]) -> list[dict]:
             score -= 3
         if place.get("tourist_trap_risk") == "low":
             score += 3
-        if place.get("source_type") in {"reddit", "openstreetmap", "google_maps"}:
+        if place.get("source_type") in {"reddit", "google_maps", "curated", "curated_must_go"}:
             score += 2
         if place.get("source_url"):
             score += 1
@@ -747,10 +735,6 @@ def _open_status_label(place: dict, visit_day: str) -> str:
         return "Permanently closed according to Google Maps"
     if place.get("source_type") == "google_maps":
         return "Google Maps hours available after refresh"
-    if place.get("source_type") == "openstreetmap" and opening_hours:
-        return f"OpenStreetMap hours: {opening_hours[0]}"
-    if place.get("source_type") == "openstreetmap":
-        return "Opening hours not mapped in OpenStreetMap"
     if place.get("source_type") == "official_open_data" and opening_hours:
         return f"Official schedule: {opening_hours[0]}"
     if place.get("source_type") == "official_open_data":
@@ -760,8 +744,12 @@ def _open_status_label(place: dict, visit_day: str) -> str:
 
 def retrieve_places(intent: TravelIntent) -> list[Place]:
     must_go_intent = _has_must_go_intent(intent)
-    all_regular_places = _all_places(include_must_go=False)
-    all_places = _all_places(include_must_go=must_go_intent)
+    all_regular_places = [
+        place for place in _all_places(include_must_go=False) if not _is_permanently_closed(place)
+    ]
+    all_places = [
+        place for place in _all_places(include_must_go=must_go_intent) if not _is_permanently_closed(place)
+    ]
     if must_go_intent:
         all_places = [
             place
@@ -882,10 +870,11 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
         if requested_matchers and _matches_any_requested_type(place, requested_matchers):
             score += 6
             if place.get("source_type") in {
-                "openstreetmap",
                 "official_open_data",
                 "reddit",
                 "google_maps",
+                "curated",
+                "curated_must_go",
             }:
                 score += 3
             if place.get("source_url"):
@@ -899,14 +888,14 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
         if _has_asian_food_intent(intent):
             if _is_asian_restaurant(place):
                 score += 10
-            if place.get("source_type") in {"openstreetmap", "reddit", "google_maps"}:
+            if place.get("source_type") in {"reddit", "google_maps", "curated", "curated_must_go"}:
                 score += 3
             if place.get("source_url"):
                 score += 2
         elif _has_restaurant_intent(intent):
             if _is_restaurant_place(place):
                 score += 8
-            if place.get("source_type") == "openstreetmap":
+            if place.get("source_type") == "google_maps":
                 score += 4
             if place.get("source_url"):
                 score += 2
@@ -960,11 +949,10 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
             estimated_duration_minutes=place["estimated_duration_minutes"],
             latitude=place["latitude"],
             longitude=place["longitude"],
-            map_source=place.get("map_source", ""),
-            map_url=place.get("map_url", ""),
+            map_source="Google Maps",
+            map_url=_google_maps_url_for_place(place),
             price_label=place.get("price_label", ""),
-            google_maps_url=place.get("google_maps_url")
-            or _google_maps_url(place["latitude"], place["longitude"], place["name"]),
+            google_maps_url=_google_maps_url_for_place(place),
             google_rating=place.get("google_rating"),
             google_user_rating_count=place.get("google_user_rating_count"),
             google_price_level=place.get("google_price_level", ""),

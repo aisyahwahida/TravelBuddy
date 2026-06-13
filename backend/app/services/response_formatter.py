@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from app.schemas.travel import Itinerary, Place, TravelIntent
 
 
@@ -14,6 +16,23 @@ def _cost_hint(place: Place) -> str:
     if "restaurant" in place.category.lower():
         return "Meal cost varies; check menu"
     return "Check current price"
+
+
+def clean_assistant_message(message: str) -> str:
+    cleaned = re.sub(
+        r"\s+from\s+\d+\s+candidate\s+places\b\.?",
+        "",
+        message,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"\s+retriev(?:e|ed|ing)\s+\d+\s+places\b\.?",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    return cleaned.strip()
 
 
 def build_assistant_message(

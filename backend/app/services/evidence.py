@@ -3,8 +3,9 @@ from app.schemas.travel import EvidenceItem, Place
 TRUSTED_SOURCE_TYPES = {
     "reddit",
     "google_maps",
-    "openstreetmap",
     "official_open_data",
+    "curated",
+    "curated_must_go",
 }
 
 
@@ -23,22 +24,22 @@ def build_evidence(stops: list[Place]) -> list[EvidenceItem]:
 
         if stop.source_type == "google_maps":
             support_summary = (
-                "Google Maps data supports the displayed rating, opening-hours status, "
-                "and map reference for this stop."
+                "Google Maps supports the map reference for this stop and, when available, "
+                "the displayed rating and opening-hours status."
             )
             source_title = stop.source_title or "Google Maps place details"
-        elif stop.source_type == "openstreetmap":
-            support_summary = (
-                "OpenStreetMap data supports the displayed coordinates, map link, "
-                "and opening-hours or price tags when local mappers have added them."
-            )
-            source_title = stop.source_title or "OpenStreetMap place details"
         elif stop.source_type == "official_open_data":
             support_summary = (
                 "Official open-data records support this event or activity, including "
                 "schedule, venue, price, and source page when provided."
             )
             source_title = stop.source_title or "Official Paris open-data record"
+        elif stop.source_type in {"curated", "curated_must_go"}:
+            support_summary = (
+                "A curated TravelBuddy place record supports why this stop fits the request, "
+                "and the attached Google Maps link is provided for navigation."
+            )
+            source_title = stop.source_title or "Curated TravelBuddy place reference"
         else:
             support_summary = (
                 "Reddit community discussion is used as local-style evidence for why "

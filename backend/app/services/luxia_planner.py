@@ -32,6 +32,7 @@ class LuxiaTravelPlanner:
             "Use only the provided candidate_places for itinerary stops so coordinates remain accurate. "
             "Build France-only itineraries with realistic pacing, local-feeling recommendations, "
             "clear meal breaks, and low tourist-trap risk when requested. "
+            "Do not mention candidate_places counts, retrieval counts, ranking steps, or any internal pipeline details. "
             "If the user is vague, default to a balanced 1-day mixed itinerary starting at 09:00, "
             "with lunch around 12:30 and dinner around 19:00 when food candidates are available. "
             "For multi-day requests, split itinerary.days into the exact number of requested days, "
