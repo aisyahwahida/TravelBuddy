@@ -149,8 +149,8 @@ The production deployment runs on:
 
 | Component | Service | Address |
 |-----------|---------|---------|
-| Frontend  | S3 static website | `http://travelbuddy-frontend-1781293063.s3-website-us-east-1.amazonaws.com` |
-| Backend   | EC2 t3.small (Amazon Linux 2023) | `http://18.232.4.103:8000` |
+| Frontend  | S3 static website | `http://travelbuddy-frontend-1781322896.s3-website-us-east-1.amazonaws.com` |
+| Backend   | EC2 t3.small (Amazon Linux 2023) | `http://34.205.234.211:8000` |
 | Sessions  | DynamoDB table `travelbuddy-sessions` | us-east-1 |
 
 > **What gets wiped when the Academy account resets:**
@@ -189,7 +189,7 @@ aws ec2 wait instance-running --instance-ids <instance-id>
 
 **Step 5 — push new credentials to EC2** from your Mac terminal:
 ```bash
-ssh -i /tmp/travelbuddy-key.pem ec2-user@18.232.4.103 "bash ~/refresh_creds.sh <NewAccessKey> <NewSecretKey>"
+ssh -i /tmp/travelbuddy-key.pem ec2-user@34.205.234.211 "bash ~/refresh_creds.sh <NewAccessKey> <NewSecretKey>"
 ```
 
 > **If `/tmp/travelbuddy-key.pem` is missing** (Mac rebooted), click **Download PEM** on the Academy lab page, then:
@@ -212,7 +212,7 @@ source .env
 scp -i $EC2_KEY /tmp/backend_v2.zip ec2-user@$EC2_HOST:~/backend_v2.zip
 
 # Then on EC2:
-ssh -i /tmp/travelbuddy-key.pem ec2-user@18.232.4.103
+ssh -i /tmp/travelbuddy-key.pem ec2-user@34.205.234.211
 sudo systemctl stop travelbuddy
 rm -rf ~/backend_old ~/backend_new && mkdir ~/backend_new
 unzip -q ~/backend_v2.zip -d ~/backend_new
