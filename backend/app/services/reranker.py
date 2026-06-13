@@ -49,7 +49,7 @@ def metadata_score(place: dict, intent: TravelIntent) -> float:
     elif place.get("tourist_trap_risk") == "high" and "must_go" not in tags:
         score -= 2.5
 
-    if place.get("source_type") in {"reddit", "google_maps", "openstreetmap", "official_open_data", "curated_must_go"}:
+    if place.get("source_type") in {"reddit", "google_maps", "official_open_data", "curated_must_go"}:
         score += 1.0
     if place.get("source_url"):
         score += 0.8

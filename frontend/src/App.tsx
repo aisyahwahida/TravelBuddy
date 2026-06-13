@@ -23,7 +23,6 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api";
 
 const SRC_COLOR: Record<string, string> = {
   reddit: "#d05a2b",
-  openstreetmap: "#5a8a3c",
   google_maps: "#3a72c4",
   curated_must_go: "#bd8f33",
   official_open_data: "#bd8f33",
@@ -31,7 +30,6 @@ const SRC_COLOR: Record<string, string> = {
 
 const SRC_LABEL: Record<string, string> = {
   reddit: "Reddit · r/travel",
-  openstreetmap: "OpenStreetMap",
   google_maps: "Google Places",
   curated_must_go: "Curated · France list",
   official_open_data: "Official open data",

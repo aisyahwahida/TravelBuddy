@@ -8,7 +8,7 @@ from urllib import request
 from dotenv import load_dotenv
 
 from app.data.france_places import FRANCE_PLACES
-from app.services.retriever import REDDIT_PLACES_PATH, OSM_POI_PLACES_PATH
+from app.services.retriever import REDDIT_PLACES_PATH
 
 load_dotenv()
 
@@ -39,27 +39,12 @@ def _load_reddit_places() -> list[dict]:
     return []
 
 
-def _load_osm_poi_places() -> list[dict]:
-    if not OSM_POI_PLACES_PATH.exists():
-        return []
-    try:
-        payload = json.loads(OSM_POI_PLACES_PATH.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return []
-    if isinstance(payload, dict):
-        return payload.get("places", [])
-    if isinstance(payload, list):
-        return payload
-    return []
-
-
 def _candidate_places(reddit_only: bool = False) -> list[dict]:
     reddit_places = _load_reddit_places()
-    osm_places = _load_osm_poi_places()
     if reddit_only:
         places = reddit_places
     else:
-        places = [*FRANCE_PLACES, *reddit_places, *osm_places]
+        places = [*FRANCE_PLACES, *reddit_places]
     deduped: dict[str, dict] = {}
     for place in places:
         key = f"{place.get('name', '').lower()}::{place.get('city', '').lower()}"
