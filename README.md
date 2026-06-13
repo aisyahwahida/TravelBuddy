@@ -211,6 +211,9 @@ zip -r /tmp/backend_v2.zip backend/app backend/requirements.txt \
 source .env
 scp -i $EC2_KEY /tmp/backend_v2.zip ec2-user@$EC2_HOST:~/backend_v2.zip
 
+# Also upload the embedding cache (speeds up search — without it first request is very slow):
+scp -i $EC2_KEY backend/app/data/embedding_cache.pkl ec2-user@$EC2_HOST:~/backend/app/data/embedding_cache.pkl
+
 # Then on EC2:
 ssh -i /tmp/travelbuddy-key.pem ec2-user@34.205.234.211
 sudo systemctl stop travelbuddy
@@ -304,6 +307,9 @@ ssh -i $EC2_KEY ec2-user@$EC2_HOST "
   mkdir -p ~/pip_tmp &&
   TMPDIR=~/pip_tmp pip3.11 install -r ~/backend/requirements.txt
 "
+
+# Upload the embedding cache (pre-computed — makes search fast):
+scp -i $EC2_KEY backend/app/data/embedding_cache.pkl ec2-user@$EC2_HOST:~/backend/app/data/embedding_cache.pkl
 ```
 
 **Step 8 — write credentials and set up systemd:**
