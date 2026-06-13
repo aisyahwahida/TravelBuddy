@@ -3,6 +3,7 @@ from pathlib import Path
 
 from app.data.france_places import FRANCE_PLACES
 from app.schemas.travel import Place, TravelIntent
+from app.services.closed_places import is_permanently_closed_place
 from app.services.reranker import rerank_places
 from app.services.semantic_retrieval import semantic_scores
 
@@ -43,6 +44,10 @@ def _is_permanently_closed(place: dict) -> bool:
     reason = str(place.get("reason", "")).lower()
     return (
         status == "CLOSED_PERMANENTLY"
+        or is_permanently_closed_place(
+            str(place.get("name", "")),
+            str(place.get("city", "")),
+        )
         or "permanently closed" in label
         or "permanently closed" in source_title
         or "permanently closed" in reason

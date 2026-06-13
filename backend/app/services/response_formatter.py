@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.schemas.travel import AlternativePlace, Itinerary, Place, TravelIntent
+from app.services.closed_places import is_permanently_closed_place
 
 
 def _cost_hint(place: Place) -> str:
@@ -53,7 +54,14 @@ def build_alternative_options(
     used_names: set[str] | None = None,
 ) -> list[AlternativePlace]:
     excluded = {name.lower() for name in (used_names or set())}
-    candidates = [p for p in places if p.name.lower() not in excluded]
+    candidates = [
+        p
+        for p in places
+        if p.name.lower() not in excluded
+        and not is_permanently_closed_place(p.name, p.city)
+        and p.business_status != "CLOSED_PERMANENTLY"
+        and "permanently closed" not in p.open_status_label.lower()
+    ]
     return [
         AlternativePlace(
             name=place.name,

@@ -154,9 +154,73 @@ function createSessionId() {
   return globalThis.crypto?.randomUUID?.() ?? String(Date.now());
 }
 
+function isPermanentlyClosedPlace(place: Place) {
+  return (
+    place.business_status === "CLOSED_PERMANENTLY" ||
+    place.open_status_label.toLowerCase().includes("permanently closed")
+  );
+}
+
+function withoutClosedStops(days: DaySection[]) {
+  return days
+    .map((day) => ({ ...day, stops: day.stops.filter((stop) => !isPermanentlyClosedPlace(stop)) }))
+    .filter((day) => day.stops.length > 0);
+}
+
+function removeNamesFromText(text: string, names: Set<string>) {
+  let cleaned = text;
+  names.forEach((name) => {
+    cleaned = cleaned.replace(new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "");
+  });
+  return cleaned.replace(/\s{2,}/g, " ").trim();
+}
+
+function sanitizeChatResponse(response: ChatResponse): ChatResponse {
+  const safeStops = response.itinerary.stops.filter((stop) => !isPermanentlyClosedPlace(stop));
+  const safeDays = response.itinerary.days?.length
+    ? withoutClosedStops(response.itinerary.days)
+    : [];
+  const removedNames = new Set(
+    response.itinerary.stops
+      .filter((stop) => isPermanentlyClosedPlace(stop))
+      .map((stop) => stop.name)
+  );
+  return {
+    ...response,
+    assistant_message: removeNamesFromText(response.assistant_message, removedNames),
+    itinerary: {
+      ...response.itinerary,
+      stops: safeStops,
+      days: safeDays,
+    },
+    evidence: response.evidence.filter((item) => !removedNames.has(item.place_name)),
+  };
+}
+
+function sanitizeSavedSession(session: SavedSession): SavedSession {
+  const result = sanitizeChatResponse(session.result);
+  const planDays = withoutClosedStops(session.planDays);
+  return {
+    ...session,
+    result,
+    planDays,
+    messages: session.messages.map((msg) =>
+      msg.role === "assistant" && msg.response
+        ? {
+            ...msg,
+            content: sanitizeChatResponse(msg.response).assistant_message,
+            response: sanitizeChatResponse(msg.response),
+          }
+        : msg
+    ),
+  };
+}
+
 function loadSessions(): SavedSession[] {
   try {
-    return JSON.parse(localStorage.getItem("travelbuddy_sessions") || "[]");
+    return JSON.parse(localStorage.getItem("travelbuddy_sessions") || "[]")
+      .map(sanitizeSavedSession)
+      .filter((session: SavedSession) => session.result.itinerary.stops.length > 0);
   } catch {
     return [];
   }
@@ -277,13 +341,15 @@ export default function App() {
     days: DaySection[],
     alts: AlternativePlace[]
   ) {
+    const safeResponse = sanitizeChatResponse(res);
+    const safeDays = withoutClosedStops(days);
     const session: SavedSession = {
       id: sid,
-      title: res.extracted_intent.destination || "Untitled",
+      title: safeResponse.extracted_intent.destination || "Untitled",
       timestamp: Date.now(),
       messages: msgs,
-      result: res,
-      planDays: days,
+      result: safeResponse,
+      planDays: safeDays,
       planAlts: alts,
     };
     setSavedSessions((prev) => {
@@ -294,11 +360,12 @@ export default function App() {
   }
 
   function restoreSession(session: SavedSession) {
+    const safeSession = sanitizeSavedSession(session);
     setSessionId(session.id);
-    setMessages(session.messages);
-    setResult(session.result);
-    setPlanDays(session.planDays);
-    setPlanAlts(session.planAlts);
+    setMessages(safeSession.messages);
+    setResult(safeSession.result);
+    setPlanDays(safeSession.planDays);
+    setPlanAlts(safeSession.planAlts);
     setSelectedStopIndex(0);
     setSelectedMapDayIndex(0);
     setError(null);
@@ -358,7 +425,7 @@ export default function App() {
             if (currentEvent === "status") {
               setLoadingMessage(data.message);
             } else if (currentEvent === "result") {
-              const chat = data as ChatResponse;
+              const chat = sanitizeChatResponse(data as ChatResponse);
               const sid = chat.session_id || sessionId;
               const days: DaySection[] = chat.itinerary.days?.length
                 ? chat.itinerary.days
@@ -529,9 +596,9 @@ export default function App() {
             <div className={`msg ${msg.role === "user" ? "user" : "ai"}`} key={i}>
               <div className="msg-role">
                 <span className={`avatar ${msg.role === "user" ? "user" : "ai"}`}>
-                  {msg.role === "user" ? "Y" : "L"}
+                  {msg.role === "user" ? "Y" : "A"}
                 </span>
-                <span className="msg-name">{msg.role === "user" ? "You" : "Luxia"}</span>
+                <span className="msg-name">{msg.role === "user" ? "You" : "Arthur"}</span>
               </div>
               <div className="bubble">
                 {msg.content}
@@ -565,12 +632,11 @@ export default function App() {
           {loading && (
             <div className="msg ai">
               <div className="msg-role">
-                <span className="avatar ai">L</span>
-                <span className="msg-name">Luxia</span>
+                <span className="avatar ai">A</span>
+                <span className="msg-name">Arthur</span>
               </div>
               <div className="bubble" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <LoaderCircle size={14} className="spin" style={{ color: "var(--green)" }} />
-                {loadingMessage}
               </div>
             </div>
           )}

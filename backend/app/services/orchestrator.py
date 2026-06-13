@@ -3,10 +3,12 @@ from __future__ import annotations
 import re
 
 from app.schemas.travel import ChatRequest, ChatResponse, Itinerary, TravelIntent
+from app.services.closed_places import scrub_permanently_closed_names
 from app.services.evidence import build_evidence
 from app.services.extractor import extract_travel_intent
 from app.services.luxia_planner import LuxiaTravelPlanner
 from app.services.planner import build_itinerary, split_stops_by_day
+from app.services.place_safety import sanitize_itinerary, sanitize_response
 from app.services.response_formatter import (
     build_alternative_options,
     build_assistant_message,
@@ -52,7 +54,7 @@ def _load_previous_itinerary(session_id: str) -> Itinerary | None:
     try:
         session = get_session(session_id)
         data = session.get("latest_itinerary")
-        return Itinerary.model_validate(data) if data else None
+        return sanitize_itinerary(Itinerary.model_validate(data)) if data else None
     except Exception:
         return None
 
@@ -83,7 +85,7 @@ def _message_with_context(request: ChatRequest) -> str:
     context_lines = []
     for item in recent_history:
         role = item.get("role", "user")
-        content = item.get("content", "").strip()
+        content = scrub_permanently_closed_names(item.get("content", "").strip())
         if content:
             context_lines.append(f"{role}: {content}")
 
@@ -147,6 +149,7 @@ class TravelOrchestrator:
             )
             response.session_id = session_id
             response = _apply_day_normalization(response)
+            response = sanitize_response(response)
             response.evidence = build_evidence(response.itinerary.stops)
             response.assumptions = response.extracted_intent.assumptions
             used = {stop.name for stop in response.itinerary.stops}
@@ -160,7 +163,7 @@ class TravelOrchestrator:
         except Exception:
             itinerary = build_itinerary(intent, places)
             assistant_message = build_assistant_message(intent, itinerary, places)
-            return ChatResponse(
+            response = ChatResponse(
                 assistant_message=assistant_message,
                 extracted_intent=intent,
                 itinerary=itinerary,
@@ -171,6 +174,7 @@ class TravelOrchestrator:
                     places, {stop.name for stop in itinerary.stops}
                 ),
             )
+            return sanitize_response(response)
 
     # ── Top-level entry point (regular /api/chat endpoint) ──
 

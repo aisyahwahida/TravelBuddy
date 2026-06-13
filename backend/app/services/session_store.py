@@ -8,7 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from app.schemas.travel import ChatRequest, ChatResponse
+from app.schemas.travel import ChatRequest, ChatResponse, Itinerary
+from app.services.place_safety import sanitize_itinerary
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,15 @@ def _file_write(session: dict) -> None:
     )
 
 
+def _sanitize_session(session: dict) -> dict:
+    latest = session.get("latest_itinerary")
+    if latest:
+        session["latest_itinerary"] = sanitize_itinerary(
+            Itinerary.model_validate(latest)
+        ).model_dump()
+    return session
+
+
 # ── DynamoDB-backed store ─────────────────────────────────────────────────────
 # We serialize the full session dict to a JSON *string* stored in a single
 # "data" attribute. This avoids boto3's Decimal/float issues entirely.
@@ -85,7 +95,7 @@ def _dynamo_read(session_id: str) -> dict | None:
         item = resp.get("Item")
         if not item:
             return None
-        return json.loads(item["data"])
+        return _sanitize_session(json.loads(item["data"]))
     except Exception as exc:
         logger.warning("DynamoDB read failed: %s", exc)
         return None
@@ -117,6 +127,7 @@ def _dynamo_list() -> list[dict] | None:
         result = []
         for item in resp.get("Items", []):
             data = json.loads(item.get("data", "{}"))
+            data = _sanitize_session(data)
             result.append({
                 "session_id": item["session_id"],
                 "created_at": data.get("created_at", ""),
@@ -136,10 +147,13 @@ def _read_session(session_id: str) -> dict:
     data = _dynamo_read(session_id)
     if data is not None:
         return data
-    return _file_read(session_id)
+    return _sanitize_session(_file_read(session_id))
 
 
 def save_chat_turn(request: ChatRequest, response: ChatResponse) -> None:
+    response = response.model_copy(
+        update={"itinerary": sanitize_itinerary(response.itinerary)}
+    )
     session = _read_session(response.session_id)
     session["updated_at"] = _now_iso()
     session["latest_itinerary"] = response.itinerary.model_dump()
@@ -163,6 +177,7 @@ def list_sessions() -> list[dict]:
     sessions = []
     for path in SESSION_DIR.glob("*.json"):
         data = json.loads(path.read_text(encoding="utf-8"))
+        data = _sanitize_session(data)
         sessions.append({
             "session_id": data.get("session_id", path.stem),
             "created_at": data.get("created_at", ""),
@@ -180,4 +195,4 @@ def get_session(session_id: str) -> dict:
     path = _file_path(session_id)
     if not path.exists():
         raise FileNotFoundError(session_id)
-    return json.loads(path.read_text(encoding="utf-8"))
+    return _sanitize_session(json.loads(path.read_text(encoding="utf-8")))

@@ -2,6 +2,7 @@ import json
 import os
 
 from app.schemas.travel import ChatRequest, ChatResponse, Itinerary, Place, TravelIntent
+from app.services.closed_places import scrub_permanently_closed_names
 from app.services.luxia_client import LuxiaClient, extract_json_object
 from app.services.prompt_templates import template_guidance
 
@@ -106,7 +107,13 @@ class LuxiaTravelPlanner:
 
         payload = {
             "message": request.message,
-            "history": request.history[-4:],
+            "history": [
+                {
+                    **item,
+                    "content": scrub_permanently_closed_names(item.get("content", "")),
+                }
+                for item in request.history[-4:]
+            ],
             "initial_intent": intent.model_dump(),
             "request_type_guidance": template_guidance(intent),
             "candidate_places": [_slim(p) for p in candidates],
