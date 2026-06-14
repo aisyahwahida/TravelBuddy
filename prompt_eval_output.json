@@ -17,45 +17,45 @@
       "walking_constraints": "",
       "assumption_count": 3,
       "clarification_question": "Do you want this to feel local/quiet, iconic/first-time, food-focused, or budget-friendly?",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Jardin des Plantes",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Rue des Martyrs",
+          "name": "Rue Daguerre",
           "city": "Paris",
-          "category": "food street",
-          "source_type": "google_maps"
+          "category": "market street",
+          "source_type": "reddit"
         },
         {
-          "name": "Ten Belles",
+          "name": "Jardin des Plantes",
           "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
+          "category": "park",
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
         },
         {
           "name": "Parc de la Villette",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -77,24 +77,12 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Centre Pompidou",
-          "city": "Paris",
-          "category": "must-go museum",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Panth\u00e9on",
+          "name": "Eiffel Tower",
           "city": "Paris",
           "category": "must-go landmark",
           "source_type": "curated_must_go"
@@ -103,13 +91,25 @@
           "name": "Palais Garnier",
           "city": "Paris",
           "category": "must-go culture or family attraction",
-          "source_type": "google_maps"
+          "source_type": "curated_must_go"
         },
         {
           "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Mus\u00e9e Edith Piaf",
+          "city": "Paris",
+          "category": "must-go museum",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -137,40 +137,40 @@
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Librairie Galignani",
+          "name": "Les Puces de Vanves",
           "city": "Paris",
-          "category": "bookstore",
-          "source_type": "google_maps"
+          "category": "Flea market",
+          "source_type": "reddit"
         },
         {
-          "name": "Rue Saint-Honore",
+          "name": "Rue Daguerre",
           "city": "Paris",
-          "category": "luxury shopping street",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Boot Cafe",
-          "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Le Chardenoux",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "category": "market street",
+          "source_type": "reddit"
         },
         {
           "name": "Musee Bourdelle",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Saint-Dominique",
+          "city": "Paris",
+          "category": "shopping_street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Marais",
+          "city": "Paris",
+          "category": "neighborhood",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Les Puces de la Porte de Montreuil",
+          "city": "Paris",
+          "category": "Flea market",
+          "source_type": "reddit"
         }
       ]
     },
@@ -197,40 +197,40 @@
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Croix-Rousse",
+          "name": "TripFrip Vintage",
           "city": "Lyon",
-          "category": "neighborhood",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Marche Saint-Antoine",
-          "city": "Lyon",
-          "category": "Market",
-          "source_type": "google_maps"
+          "category": "vintage and upcycling shop",
+          "source_type": "reddit"
         },
         {
           "name": "KFC",
           "city": "Lyon",
           "category": "Fast food restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Maison Mathuvu",
+          "name": "Les Halles Paul Bocuse",
           "city": "Lyon",
-          "category": "local gift and design shop",
-          "source_type": "google_maps"
+          "category": "Food market",
+          "source_type": "reddit"
         },
         {
           "name": "Westfield La Part-Dieu",
           "city": "Lyon",
           "category": "shopping mall",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "TripFrip Vintage",
+          "name": "Maison Mathuvu",
           "city": "Lyon",
-          "category": "vintage and upcycling shop",
-          "source_type": "google_maps"
+          "category": "local gift and design shop",
+          "source_type": "reddit"
+        },
+        {
+          "name": "IKEA",
+          "city": "Lyon",
+          "category": "Department store / restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -251,27 +251,39 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 3,
+      "candidate_count": 6,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Vieux Nice Shopping Streets",
+          "name": "Humana shop",
           "city": "Nice",
-          "category": "souvenir shopping area",
-          "source_type": "google_maps"
+          "category": "vintage/thrift/flea markets",
+          "source_type": "reddit"
         },
         {
-          "name": "Cours Saleya Souvenir Stands",
+          "name": "Place Massena",
           "city": "Nice",
-          "category": "souvenir market area",
-          "source_type": "google_maps"
+          "category": "parks",
+          "source_type": "reddit"
         },
         {
-          "name": "Cours Saleya Flower Market",
+          "name": "Colline du Ch\u00e2teau",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Mont Alban Fort",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "March\u00e9 aux Fleurs",
           "city": "Nice",
           "category": "market",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -291,15 +303,27 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 1,
+      "candidate_count": 3,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "Bordeaux Winery",
+          "city": "Bordeaux",
+          "category": "winery",
+          "source_type": "reddit"
+        },
+        {
           "name": "Marche des Capucins",
           "city": "Bordeaux",
           "category": "food market",
-          "source_type": "google_maps"
+          "source_type": "curated"
+        },
+        {
+          "name": "St. Emilion",
+          "city": "Bordeaux",
+          "category": "neighborhood",
+          "source_type": "reddit"
         }
       ]
     },
@@ -321,21 +345,39 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 2,
+      "candidate_count": 10,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Vallon des Auffes",
+          "name": "Calanque de Sormiou",
           "city": "Marseille",
-          "category": "harbor walk",
-          "source_type": "google_maps"
+          "category": "parks",
+          "source_type": "reddit"
         },
         {
-          "name": "Noailles Market",
+          "name": "Chez Yassine",
           "city": "Marseille",
-          "category": "market",
-          "source_type": "google_maps"
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
+          "name": "MuCEM",
+          "city": "Marseille",
+          "category": "museums",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Prophets Beach",
+          "city": "Marseille",
+          "category": "local activity spots",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Chez \u00c9ttiene",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
         }
       ]
     },
@@ -365,7 +407,7 @@
           "name": "La Petite France Side Streets",
           "city": "Strasbourg",
           "category": "historic walk",
-          "source_type": "google_maps"
+          "source_type": "curated"
         }
       ]
     },
@@ -386,45 +428,45 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Les Invalides",
+          "name": "Le Potager du Pere Thierry",
           "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
+          "category": "restaurant",
+          "source_type": "reddit"
         },
         {
-          "name": "Rue Saint-Dominique",
-          "city": "Paris",
-          "category": "shopping_street",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Centre Pompidou",
+          "name": "Opera Garnier (Palais Garnier)",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Librairie Galignani",
+          "city": "Paris",
+          "category": "bookstore",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Marais",
+          "city": "Paris",
+          "category": "neighborhood",
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Du Pain et des Idees",
-          "city": "Paris",
-          "category": "bakery",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Le Potager du Pere Thierry",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -445,33 +487,33 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 9,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Okomusu",
           "city": "Paris",
           "category": "japanese restaurant",
-          "source_type": "google_maps"
+          "source_type": "curated"
+        },
+        {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
         },
         {
           "name": "Pho Banh Cuon 14",
           "city": "Paris",
           "category": "vietnamese restaurant",
-          "source_type": "google_maps"
+          "source_type": "curated"
         },
         {
           "name": "Trois Fois Plus de Piment",
           "city": "Paris",
           "category": "chinese restaurant",
-          "source_type": "google_maps"
+          "source_type": "curated"
         }
       ]
     },
@@ -497,28 +539,28 @@
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Bistrot Instinct",
+          "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Pho Banh Cuon 14",
-          "city": "Paris",
-          "category": "vietnamese restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Pho Thai",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Le Potager du Pere Thierry",
+          "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Pho Banh Cuon 14",
+          "city": "Paris",
+          "category": "vietnamese restaurant",
+          "source_type": "curated"
         }
       ]
     },
@@ -546,7 +588,7 @@
           "name": "Wazemmes Market",
           "city": "Lille",
           "category": "market",
-          "source_type": "google_maps"
+          "source_type": "curated"
         }
       ]
     },
@@ -567,34 +609,10 @@
       "walking_constraints": "",
       "assumption_count": 1,
       "clarification_question": "",
-      "candidate_count": 24,
+      "candidate_count": 30,
       "day_count": 5,
       "duplicate_count": 0,
       "top_places": [
-        {
-          "name": "Centre Pompidou",
-          "city": "Paris",
-          "category": "must-go museum",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Le Petit Vendome",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Mus\u00e9e d'Orsay",
-          "city": "Paris",
-          "category": "must-go museum",
-          "source_type": "curated_must_go"
-        },
-        {
-          "name": "Marche des Capucins",
-          "city": "Bordeaux",
-          "category": "food market",
-          "source_type": "google_maps"
-        },
         {
           "name": "Dune of Pilat",
           "city": "Arcachon",
@@ -602,10 +620,34 @@
           "source_type": "curated_must_go"
         },
         {
-          "name": "Palais Garnier",
+          "name": "Marche des Capucins",
+          "city": "Bordeaux",
+          "category": "food market",
+          "source_type": "curated"
+        },
+        {
+          "name": "Palace of Versailles",
+          "city": "Versailles",
+          "category": "must-go castle or palace",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Panth\u00e9on",
           "city": "Paris",
-          "category": "must-go culture or family attraction",
-          "source_type": "google_maps"
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Patriarche Cellar",
+          "city": "Beaune",
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -627,39 +669,39 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Cafe des Musees",
-          "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Musee Carnavalet",
-          "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Cafe des Musees",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "59 Rivoli",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
         },
         {
           "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Les Invalides",
-          "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -681,39 +723,45 @@
       "walking_constraints": "",
       "assumption_count": 1,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Monoprix Avenue des Ternes",
-          "city": "Paris",
-          "category": "affordable grocery and general store",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Le Potager du Pere Thierry",
+          "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Passage Jouffroy",
           "city": "Paris",
           "category": "covered passage shopping",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Potager du Pere Thierry",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Monoprix Avenue des Ternes",
+          "city": "Paris",
+          "category": "affordable grocery and general store",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Rue Saint-Dominique",
+          "city": "Paris",
+          "category": "shopping_street",
+          "source_type": "reddit"
         },
         {
           "name": "Sophie Sacs",
           "city": "Paris",
           "category": "affordable leather bag shop",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -734,7 +782,7 @@
       "walking_constraints": "",
       "assumption_count": 1,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -742,31 +790,31 @@
           "name": "Avenue Montaigne",
           "city": "Paris",
           "category": "shopping_street",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Rue Saint-Honore",
           "city": "Paris",
           "category": "luxury shopping street",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Thanx God I'm a VIP",
+          "name": "Rue Saint-Honore",
           "city": "Paris",
-          "category": "vintage shop",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "category": "shopping_street",
+          "source_type": "reddit"
         },
         {
           "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -788,7 +836,7 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -796,31 +844,31 @@
           "name": "TripFrip Vintage",
           "city": "Lyon",
           "category": "vintage and upcycling shop",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Maison Mathuvu",
           "city": "Lyon",
           "category": "local gift and design shop",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Au Bureau",
           "city": "Lyon",
           "category": "Bar / restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Lyon Kayak",
           "city": "Lyon",
           "category": "Outdoor activity / event",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "KFC",
+          "name": "Restaurant Malva",
           "city": "Lyon",
-          "category": "Fast food restaurant",
-          "source_type": "google_maps"
+          "category": "Restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -841,27 +889,39 @@
       "walking_constraints": "",
       "assumption_count": 1,
       "clarification_question": "",
-      "candidate_count": 3,
+      "candidate_count": 11,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Vieux Nice Shopping Streets",
-          "city": "Nice",
-          "category": "souvenir shopping area",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Cours Saleya Souvenir Stands",
-          "city": "Nice",
-          "category": "souvenir market area",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Cours Saleya Flower Market",
           "city": "Nice",
           "category": "market",
-          "source_type": "google_maps"
+          "source_type": "curated"
+        },
+        {
+          "name": "Mont Alban Fort",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Colline du Ch\u00e2teau",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Place Massena",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Humana shop",
+          "city": "Nice",
+          "category": "vintage/thrift/flea markets",
+          "source_type": "reddit"
         }
       ]
     },
@@ -882,15 +942,27 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 1,
+      "candidate_count": 3,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "St. Emilion",
+          "city": "Bordeaux",
+          "category": "neighborhood",
+          "source_type": "reddit"
+        },
+        {
           "name": "Marche des Capucins",
           "city": "Bordeaux",
           "category": "food market",
-          "source_type": "google_maps"
+          "source_type": "curated"
+        },
+        {
+          "name": "Bordeaux Winery",
+          "city": "Bordeaux",
+          "category": "winery",
+          "source_type": "reddit"
         }
       ]
     },
@@ -911,45 +983,45 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Parc de la Villette",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Jardin des Plantes",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Musee Bourdelle",
+          "name": "Maison de Victor Hugo",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Boot Cafe",
           "city": "Paris",
           "category": "cafe",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
         },
         {
           "name": "Rue des Martyrs",
           "city": "Paris",
           "category": "food street",
-          "source_type": "google_maps"
+          "source_type": "curated"
         }
       ]
     },
@@ -969,45 +1041,45 @@
       "walking_constraints": "limited walking",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "Chez Yassine",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
           "name": "Jardin des Plantes",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Ten Belles",
-          "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Parc de la Villette",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Rue des Martyrs",
-          "city": "Paris",
-          "category": "food street",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Marche des Capucins",
-          "city": "Bordeaux",
-          "category": "food market",
-          "source_type": "google_maps"
+          "name": "Rue des Martyrs",
+          "city": "Paris",
+          "category": "food street",
+          "source_type": "curated"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc de la Villette",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1027,45 +1099,45 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Jardin des Plantes",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Rue des Martyrs",
+          "name": "Rue Daguerre",
           "city": "Paris",
-          "category": "food street",
-          "source_type": "google_maps"
+          "category": "market street",
+          "source_type": "reddit"
         },
         {
-          "name": "Ten Belles",
+          "name": "Jardin des Plantes",
           "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
+          "category": "park",
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
         },
         {
           "name": "Parc de la Villette",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -1086,7 +1158,7 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 2,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -1094,13 +1166,31 @@
           "name": "Vallon des Auffes",
           "city": "Marseille",
           "category": "harbor walk",
-          "source_type": "google_maps"
+          "source_type": "curated"
         },
         {
-          "name": "Noailles Market",
+          "name": "Cafe Sole",
           "city": "Marseille",
-          "category": "market",
-          "source_type": "google_maps"
+          "category": "cafes",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Moun\u00e9",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Mercerie",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Palais du Pharo",
+          "city": "Marseille",
+          "category": "viewpoints",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1121,7 +1211,7 @@
       "walking_constraints": "",
       "assumption_count": 1,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -1129,31 +1219,31 @@
           "name": "Musee Bourdelle",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Musee Zadkine",
+          "name": "Musee Carnavalet",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Maison de Victor Hugo",
           "city": "Paris",
           "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -1183,7 +1273,7 @@
           "name": "La Petite France Side Streets",
           "city": "Strasbourg",
           "category": "historic walk",
-          "source_type": "google_maps"
+          "source_type": "curated"
         }
       ]
     },
@@ -1203,39 +1293,39 @@
       "walking_constraints": "",
       "assumption_count": 3,
       "clarification_question": "I assumed Paris; tell me if you want another French city.",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Centre Pompidou",
-          "city": "Paris",
-          "category": "must-go museum",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Panth\u00e9on",
-          "city": "Paris",
-          "category": "must-go landmark",
-          "source_type": "curated_must_go"
-        },
-        {
-          "name": "Palais Garnier",
-          "city": "Paris",
-          "category": "must-go culture or family attraction",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Le Potager du Pere Thierry",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Palais Garnier",
+          "city": "Paris",
+          "category": "must-go culture or family attraction",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Louvre Museum",
+          "city": "Paris",
+          "category": "must-go museum",
+          "source_type": "curated_must_go"
+        },
+        {
+          "name": "Eiffel Tower",
+          "city": "Paris",
+          "category": "must-go landmark",
+          "source_type": "curated_must_go"
         }
       ]
     },
@@ -1256,33 +1346,33 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "Cafe des Musees",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
           "name": "Boot Cafe",
           "city": "Paris",
           "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Fabula",
-          "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Tribal Cafe",
           "city": "Paris",
           "category": "cafe",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Cafe Constant",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -1307,40 +1397,40 @@
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Parc de la Villette",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
+          "name": "Marche Saint-Antoine",
+          "city": "Lyon",
+          "category": "Market",
+          "source_type": "reddit"
         },
         {
-          "name": "Ten Belles",
-          "city": "Paris",
-          "category": "cafe",
-          "source_type": "google_maps"
+          "name": "Cafe Sole",
+          "city": "Marseille",
+          "category": "cafes",
+          "source_type": "reddit"
         },
         {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "name": "Chez Yassine",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Chez \u00c9ttiene",
+          "city": "Marseille",
+          "category": "restaurants",
+          "source_type": "reddit"
         },
         {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Marche des Capucins",
-          "city": "Bordeaux",
-          "category": "food market",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Jardin des Plantes",
+          "name": "Rue Daguerre",
           "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
+          "category": "market street",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1360,45 +1450,45 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 11,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Confluence (quartier de la Confluence)",
+          "name": "French Resistance Museum",
           "city": "Lyon",
-          "category": "Neighborhood",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Le Caterpilou",
-          "city": "Lyon",
-          "category": "Playground",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "IKEA",
-          "city": "Lyon",
-          "category": "Department store / restaurant",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "KFC",
-          "city": "Lyon",
-          "category": "Fast food restaurant",
-          "source_type": "google_maps"
+          "category": "museum",
+          "source_type": "reddit"
         },
         {
           "name": "Slake Coffee House",
           "city": "Lyon",
           "category": "cafe",
-          "source_type": "google_maps"
+          "source_type": "curated"
+        },
+        {
+          "name": "Restaurant Malva",
+          "city": "Lyon",
+          "category": "Restaurant",
+          "source_type": "reddit"
         },
         {
           "name": "Marche Saint-Antoine",
           "city": "Lyon",
           "category": "Market",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Confluence (quartier de la Confluence)",
+          "city": "Lyon",
+          "category": "Neighborhood",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Caterpilou",
+          "city": "Lyon",
+          "category": "Playground",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1419,7 +1509,7 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -1427,37 +1517,37 @@
           "name": "Jardin d'Acclimatation",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Rue Saint-Dominique",
-          "city": "Paris",
-          "category": "shopping_street",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Les Invalides",
-          "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Le Potager du Pere Thierry",
+          "name": "Librairie Galignani",
           "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "category": "bookstore",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Marais",
+          "city": "Paris",
+          "category": "neighborhood",
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Potager du Pere Thierry",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1483,40 +1573,40 @@
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "Musee Rodin",
+          "city": "Paris",
+          "category": "Museum",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Boot Cafe",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ten Belles",
+          "city": "Paris",
+          "category": "cafe",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Ibrik",
+          "city": "Paris",
+          "category": "Restaurant",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Le Potager du Pere Thierry",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
           "name": "Parc de la Villette",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Musee Carnavalet",
-          "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Rue des Martyrs",
-          "city": "Paris",
-          "category": "food street",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bois de Boulogne",
-          "city": "Paris",
-          "category": "Park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Slake Coffee House",
-          "city": "Lyon",
-          "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Marche des Capucins",
-          "city": "Bordeaux",
-          "category": "food market",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -1537,7 +1627,7 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 3,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
@@ -1545,19 +1635,31 @@
           "name": "Vieux Nice Shopping Streets",
           "city": "Nice",
           "category": "souvenir shopping area",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Cours Saleya Souvenir Stands",
-          "city": "Nice",
-          "category": "souvenir market area",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Cours Saleya Flower Market",
+          "name": "March\u00e9 Forville",
           "city": "Nice",
           "category": "market",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "March\u00e9 aux Fleurs",
+          "city": "Nice",
+          "category": "market",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Colline du Ch\u00e2teau",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Place Massena",
+          "city": "Nice",
+          "category": "parks",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1577,45 +1679,45 @@
       "walking_constraints": "",
       "assumption_count": 3,
       "clarification_question": "I assumed Paris; tell me if you want another French city.",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
+          "name": "Bistrot Instinct",
+          "city": "Paris",
+          "category": "restaurant",
+          "source_type": "reddit"
+        },
+        {
           "name": "Jardin des Plantes",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Musee Rodin",
           "city": "Paris",
           "category": "Museum",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Rue des Martyrs",
           "city": "Paris",
           "category": "food street",
-          "source_type": "google_maps"
+          "source_type": "curated"
         },
         {
           "name": "Ten Belles",
           "city": "Paris",
           "category": "cafe",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Bistrot Instinct",
-          "city": "Paris",
-          "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Parc de la Villette",
           "city": "Paris",
           "category": "park",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     },
@@ -1637,39 +1739,39 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Parc des Vosges",
-          "city": "Paris",
-          "category": "park",
-          "source_type": "google_maps"
-        },
-        {
-          "name": "Musee Carnavalet",
-          "city": "Paris",
-          "category": "museum",
-          "source_type": "google_maps"
-        },
-        {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Parc des Vosges",
+          "city": "Paris",
+          "category": "park",
+          "source_type": "reddit"
         },
         {
           "name": "Rue Mouffetard",
           "city": "Paris",
           "category": "shopping street",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Rue Sainte-Anne",
           "city": "Paris",
           "category": "shopping street",
-          "source_type": "google_maps"
+          "source_type": "reddit"
+        },
+        {
+          "name": "Opera Garnier (Palais Garnier)",
+          "city": "Paris",
+          "category": "museum",
+          "source_type": "reddit"
         }
       ]
     },
@@ -1692,39 +1794,45 @@
       "walking_constraints": "",
       "assumption_count": 2,
       "clarification_question": "I assumed Paris; tell me if you want another French city.",
-      "candidate_count": 8,
+      "candidate_count": 12,
       "day_count": 1,
       "duplicate_count": 0,
       "top_places": [
         {
-          "name": "Rue Daguerre",
+          "name": "Monoprix Avenue des Ternes",
           "city": "Paris",
-          "category": "market street",
-          "source_type": "google_maps"
+          "category": "affordable grocery and general store",
+          "source_type": "reddit"
         },
         {
           "name": "Le Grand Epicerie",
           "city": "Paris",
           "category": "Food hall / gourmet grocery",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
-          "name": "Rue Mouffetard",
+          "name": "Rue Daguerre",
           "city": "Paris",
-          "category": "shopping street",
-          "source_type": "google_maps"
+          "category": "market street",
+          "source_type": "reddit"
+        },
+        {
+          "name": "Bastille Market",
+          "city": "Paris",
+          "category": "market",
+          "source_type": "reddit"
         },
         {
           "name": "Bistrot Instinct",
           "city": "Paris",
           "category": "restaurant",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         },
         {
           "name": "Canal Saint-Martin",
           "city": "Paris",
           "category": "neighborhood",
-          "source_type": "google_maps"
+          "source_type": "reddit"
         }
       ]
     }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.schemas.travel import TravelIntent
+from app.services.semantic_retrieval import semantic_key
 
 
 def _tags(place: dict) -> set[str]:
@@ -9,6 +10,10 @@ def _tags(place: dict) -> set[str]:
 
 def _text(place: dict) -> str:
     return f"{place.get('name', '')} {place.get('category', '')} {place.get('reason', '')}".lower()
+
+
+def _has_real_photo(place: dict) -> bool:
+    return bool(str(place.get("photo_name", "")).strip() or str(place.get("wiki_thumb_url", "")).strip())
 
 
 def metadata_score(place: dict, intent: TravelIntent) -> float:
@@ -53,9 +58,42 @@ def metadata_score(place: dict, intent: TravelIntent) -> float:
         score += 1.0
     if place.get("source_url"):
         score += 0.8
+    if _has_real_photo(place):
+        score += 1.0
+    else:
+        score -= 0.5
+    if place.get("google_maps_url"):
+        score += 0.5
+    else:
+        score -= 0.5
     if place.get("google_rating"):
         score += min(float(place.get("google_rating", 0)) / 5, 1.0)
     score += float(place.get("confidence", 0.7))
+
+    # Profile-specific adjustments
+    user_type = getattr(intent, "user_type", "") or "general"
+    is_landmark = bool({"must_go", "landmark", "iconic", "famous"}.intersection(tags))
+    is_curated_must_go = place.get("source_type") == "curated_must_go"
+    must_go_score = (3.0 if is_landmark else 0.0) + (2.0 if is_curated_must_go else 0.0)
+    is_gem = place.get("tourist_trap_risk") == "low" and not is_landmark
+    hidden_gem_score = (3.0 if is_gem else 0.0) + (1.0 if place.get("source_type") == "reddit" else 0.0)
+    tourist_trap_score = 2.0 if place.get("tourist_trap_risk") == "high" else 0.0
+
+    if user_type == "first_time_visitor":
+        score += 0.20 * must_go_score
+    elif user_type == "returning_visitor":
+        score += 0.15 * hidden_gem_score
+        score -= 0.10 * tourist_trap_score
+    elif user_type == "local_resident":
+        score += 0.25 * hidden_gem_score
+        score -= 0.20 * tourist_trap_score
+    elif user_type == "family_trip":
+        score += 0.10 * must_go_score
+        if any(t in tags for t in ["family", "kids", "family-friendly", "park", "outdoor", "garden"]):
+            score += 2.0
+    elif user_type == "food_traveler":
+        if any(t in tags for t in ["restaurant", "bistro", "cafe", "coffee", "market", "food", "wine"]):
+            score += 2.5
 
     return score
 
@@ -70,12 +108,15 @@ def diversity_rerank(
     seen: set[tuple[str, str]] = set()
 
     for base_score, place in ranked:
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
+        key = semantic_key(place)
         if key in seen:
             continue
         category = place.get("category", "unknown")
         city = place.get("city", "unknown")
-        penalty = category_counts.get(category, 0) * 0.9 + city_counts.get(city, 0) * 0.15
+        # Light penalty at retrieval stage — keeps variety in the candidate list
+        # without over-penalising categories the user loves (e.g. museums × 3 for a
+        # museum lover). Heavy diversity enforcement happens inside the day planner.
+        penalty = category_counts.get(category, 0) * 0.3 + city_counts.get(city, 0) * 0.10
         place["_rerank_score"] = round(base_score - penalty, 4)
         selected.append(place)
         seen.add(key)
@@ -95,9 +136,11 @@ def rerank_places(
 ) -> list[dict]:
     ranked = []
     for place in places:
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
-        semantic = semantic_score_lookup.get(key, 0.0)
-        score = semantic * 10 + metadata_score(place, intent)
+        semantic = semantic_score_lookup.get(semantic_key(place), 0.0)
+        # semantic is 0–1; metadata is roughly -8 to +18.
+        # Weight at 5× so semantic contributes ~20% of a typical combined score,
+        # preventing it from overriding practical signals like source, rating, and photo.
+        score = semantic * 5 + metadata_score(place, intent)
         ranked.append((score, place))
 
     ranked.sort(key=lambda item: item[0], reverse=True)

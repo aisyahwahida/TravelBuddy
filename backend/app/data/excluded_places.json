@@ -1,0 +1,694 @@
+{
+  "generated_at": "2026-06-14",
+  "reason": "Exclude low-quality current dataset entries that still have no real Google Places photo.",
+  "places": [
+    {
+      "name": "Fontaine d'Argent",
+      "city": "Aix-en-Provence",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Fontaine Gilly",
+      "city": "Aix-en-Provence",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "La Fontaine d'Argent",
+      "city": "Aix-en-Provence",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Stèle Victor Schoelcher",
+      "city": "Aix-en-Provence",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Monuments aux morts",
+      "city": "Ajaccio",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Couvent des Visitandines",
+      "city": "Amiens",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Croix Batailleur",
+      "city": "Annecy",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Gabriel Fauré",
+      "city": "Annecy",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Monument aux combattants",
+      "city": "Annecy",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Stèle à la mémoire des combattants d'A.F.N.",
+      "city": "Annecy",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Citerne Romaine",
+      "city": "Antibes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Domaine des Trois Moulins de la Valmasque",
+      "city": "Antibes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Arles RDT 13",
+      "city": "Arles",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Calvaire du Mangano",
+      "city": "Bastia",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Alain Chartier",
+      "city": "Bayeux",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Manoir de Boissy",
+      "city": "Bayeux",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "William Kennedy Ferguson",
+      "city": "Bayeux",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "MAURICE EMMANUEL",
+      "city": "Beaune",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Rempart des Dames",
+      "city": "Beaune",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Aux Morts pour la France (1914-1918 1939-1945)",
+      "city": "Biarritz",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Lavoir du Houndaro",
+      "city": "Biarritz",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Buste de Victor-Auguste Poulain",
+      "city": "Blois",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Pavillons d'Octroi",
+      "city": "Blois",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Belvédère",
+      "city": "Caen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Calvaire Saint-Pierre",
+      "city": "Caen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Cygne de Croix",
+      "city": "Caen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Guillaume le Conquérant",
+      "city": "Caen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel Daumesnil",
+      "city": "Caen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Jardin des Oliviers",
+      "city": "Cannes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Place de la Castre",
+      "city": "Cannes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel de Murat (XVIIIe s.)",
+      "city": "Carcassonne",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Petit Puits de la Cité",
+      "city": "Carcassonne",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Croix Blanche",
+      "city": "Colmar",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Maréchal de Lattre de Tassigny",
+      "city": "Colmar",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Place du Capitaine Dreyfus",
+      "city": "Colmar",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel de Talmay",
+      "city": "Dijon",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Croix de Franchard",
+      "city": "Fontainebleau",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Général Leclerc",
+      "city": "Fontainebleau",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel du Tambour",
+      "city": "Fontainebleau",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Obélisque de Marie-Antoinette",
+      "city": "Fontainebleau",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Point de Vue des Gorges d'Apremont",
+      "city": "Fontainebleau",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Porte Neuve",
+      "city": "Grasse",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "19 mars 1962",
+      "city": "Grenoble",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Général de Beylie",
+      "city": "Grenoble",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel dit de Croy-Chasnel et de Pierre Buchet",
+      "city": "Grenoble",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Le Bigot - Commune de Saint-Martin-d'Hères",
+      "city": "Grenoble",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Léon Geist",
+      "city": "Grenoble",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Gruyères Village",
+      "city": "Gruyères",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Albert SOREL",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Alphonse Allais",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Jean Doublet",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Johan Barthold Jongkind",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Louis-Alexandre Dubourg",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Lucie Delarue-Mardrus",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Léon Leclerc",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Pierre Berthelot",
+      "city": "Honfleur",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Caserne Souham",
+      "city": "Lille",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel de l'Intendance",
+      "city": "Lille",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Belvédère",
+      "city": "Marseille",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Le Liban",
+      "city": "Marseille",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Place Sébastopol",
+      "city": "Marseille",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Ancien château Lasalle",
+      "city": "Metz",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Musée des Cordeliers (Arts et Traditions populaires)",
+      "city": "Nancy",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Butte Sainte-Anne",
+      "city": "Nantes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Bd de la Corne d'Or",
+      "city": "Nice",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Chemin du Col de Caire",
+      "city": "Nice",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Le Suquet",
+      "city": "Nice",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Quai de l'Amiral Ponchardier",
+      "city": "Nice",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Route Forestière du Mont Boron",
+      "city": "Nice",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Maison de Paul Rabaut",
+      "city": "Nimes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Galerie Colbert",
+      "city": "Paris",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Showcase",
+      "city": "Paris",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Abbé Joseph Turmel",
+      "city": "Rennes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Adolphe Orain",
+      "city": "Rennes",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Ancien hôtel de ville",
+      "city": "Rouen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Hôtel particulier",
+      "city": "Rouen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Stèle Jean Robic",
+      "city": "Rouen",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Villa Nina",
+      "city": "Saint-Malo",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Le Grande Fontain",
+      "city": "Saint-Paul-de-Vence",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Dinner in Meximieux",
+      "city": "Meximieux",
+      "reason": "generic_not_exact_place",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Bakeries in the South of France",
+      "city": "South of France",
+      "reason": "generic_not_exact_place",
+      "source_datasets": [
+        "reddit"
+      ]
+    },
+    {
+      "name": "Emil Dreifuss",
+      "city": "Strasbourg",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Aérodrome de Montaudran",
+      "city": "Toulouse",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Classe musée René Granger",
+      "city": "Tours",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Manoir de Sapaillé",
+      "city": "Tours",
+      "reason": "missing_real_google_photo",
+      "source_datasets": [
+        "must_go"
+      ]
+    },
+    {
+      "name": "Mémorial du génocide arménien d'Issy-les-Moulineaux",
+      "city": "Paris",
+      "reason": "temporarily_closed",
+      "source_datasets": [
+        "must_go"
+      ]
+    }
+  ]
+}

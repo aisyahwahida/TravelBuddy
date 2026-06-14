@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
 from app.data.france_places import FRANCE_PLACES
 from app.schemas.travel import Place, TravelIntent
 from app.services.closed_places import is_permanently_closed_place
+from app.services.place_identity import dedupe_place_dicts, place_identity_key, proximity_dedupe_place_dicts
+from app.services.place_exclusions import is_excluded_place
 from app.services.reranker import rerank_places
-from app.services.semantic_retrieval import semantic_scores
+from app.services.semantic_retrieval import semantic_key, semantic_scores
 
 REDDIT_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "reddit_places.json"
 GOOGLE_PLACES_PATH = Path(__file__).resolve().parents[1] / "data" / "google_places.json"
@@ -15,10 +19,41 @@ OPEN_DATA_PLACES_PATH = (
 MUST_GO_PLACES_PATH = (
     Path(__file__).resolve().parents[1] / "data" / "france_must_go_places.json"
 )
+MIN_STOPS_PER_DAY = 4
+MAX_STOPS_PER_DAY = 6
+MAX_RETRIEVED_PLACES = 84
+
+PROFILE_RATIOS: dict[str, dict[str, float]] = {
+    "general":            {"must_go": 0.30, "hidden_gem": 0.30, "food": 0.40},
+    "first_time_visitor": {"must_go": 0.35, "hidden_gem": 0.45, "food": 0.20},
+    "returning_visitor":  {"must_go": 0.15, "hidden_gem": 0.65, "food": 0.20},
+    "local_resident":     {"must_go": 0.05, "hidden_gem": 0.75, "food": 0.20},
+    "family_trip":        {"must_go": 0.30, "hidden_gem": 0.40, "food": 0.30},
+    "food_traveler":      {"must_go": 0.10, "hidden_gem": 0.40, "food": 0.50},
+}
 
 
 def _google_maps_url(latitude: float, longitude: float, name: str) -> str:
     return f"https://www.google.com/maps/search/?api=1&query={latitude},{longitude}"
+
+
+def _has_real_photo(place: dict) -> bool:
+    return bool(str(place.get("photo_name", "")).strip() or str(place.get("wiki_thumb_url", "")).strip())
+
+
+def _target_place_count(intent: TravelIntent) -> int:
+    destination = intent.destination.strip().lower()
+    requested = max(
+        12,
+        intent.duration_days * MAX_STOPS_PER_DAY,
+        intent.duration_days * MIN_STOPS_PER_DAY,
+    )
+    if destination in {"france", "south of france", "french riviera", "cote d'azur", "côte d'azur"}:
+        requested = max(requested, intent.duration_days * 10)
+    return min(
+        MAX_RETRIEVED_PLACES,
+        requested,
+    )
 
 
 def _load_reddit_places() -> list[dict]:
@@ -37,20 +72,29 @@ def _load_reddit_places() -> list[dict]:
     return []
 
 
-def _is_permanently_closed(place: dict) -> bool:
+def _is_closed(place: dict) -> bool:
+    if is_excluded_place(
+        str(place.get("name", "")),
+        str(place.get("city", "")),
+    ):
+        return True
+
     status = str(place.get("business_status", "")).upper()
     label = str(place.get("open_status_label", "")).lower()
     source_title = str(place.get("source_title", "")).lower()
     reason = str(place.get("reason", "")).lower()
     return (
-        status == "CLOSED_PERMANENTLY"
+        status in {"CLOSED_PERMANENTLY", "CLOSED_TEMPORARILY"}
         or is_permanently_closed_place(
             str(place.get("name", "")),
             str(place.get("city", "")),
         )
         or "permanently closed" in label
+        or "temporarily closed" in label
         or "permanently closed" in source_title
+        or "temporarily closed" in source_title
         or "permanently closed" in reason
+        or "temporarily closed" in reason
     )
 
 
@@ -156,6 +200,9 @@ def _all_places(include_must_go: bool = False) -> list[dict]:
         key = f"{place.get('name', '').lower()}::{place.get('city', '').lower()}"
         google_match = google_places.get(key)
         if google_match:
+            original_source_type = place.get("source_type", "")
+            original_source_title = place.get("source_title", "")
+            original_source_url = place.get("source_url", "")
             place = {
                 **place,
                 "google_maps_url": google_match.get("google_maps_url")
@@ -164,9 +211,11 @@ def _all_places(include_must_go: bool = False) -> list[dict]:
                 "map_url": google_match.get("google_maps_url")
                 or place.get("google_maps_url", ""),
                 "price_label": google_match.get("price_label", ""),
-                "source_type": "google_maps",
-                "source_title": google_match.get("source_title", "Google Maps reviews"),
-                "source_url": google_match.get("source_url", ""),
+                "source_type": original_source_type or "google_maps",
+                "source_title": original_source_title
+                or google_match.get("source_title", "Google Maps reviews"),
+                "source_url": original_source_url
+                or google_match.get("source_url", ""),
                 "google_rating": google_match.get("rating"),
                 "google_user_rating_count": google_match.get("user_rating_count"),
                 "google_price_level": google_match.get("price_level", ""),
@@ -176,12 +225,12 @@ def _all_places(include_must_go: bool = False) -> list[dict]:
                 "open_now": google_match.get("open_now"),
                 "photo_name": google_match.get("photo_name", ""),
             }
-        if _is_permanently_closed(place):
+        if _is_closed(place):
             continue
         place = _google_only_place(place)
         merged.append(place)
 
-    return merged
+    return dedupe_place_dicts(merged)
 
 
 def _has_cafe_intent(intent: TravelIntent) -> bool:
@@ -421,6 +470,22 @@ def _is_restaurant_place(place: dict) -> bool:
     return "restaurant" in tags or "restaurant" in haystack or "bistro" in tags
 
 
+def _is_must_go_place(place: dict) -> bool:
+    tags = {tag.lower() for tag in place.get("tags", [])}
+    return bool(
+        {"must_go", "landmark", "iconic", "famous"}.intersection(tags)
+        or place.get("source_type") == "curated_must_go"
+    )
+
+
+def _is_food_or_cafe_place(place: dict) -> bool:
+    return _is_restaurant_place(place) or _is_cafe_place(place) or _is_market_place(place)
+
+
+def _is_hidden_gem_place(place: dict) -> bool:
+    return not _is_must_go_place(place) and not _is_food_or_cafe_place(place)
+
+
 def _is_indoor_candidate(place: dict) -> bool:
     if _is_market_place(place):
         return False
@@ -539,14 +604,14 @@ def _balanced_mixed_order(places: list[dict]) -> list[dict]:
         buckets.setdefault(_place_bucket(place), []).append(place)
 
     balanced: list[dict] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[str] = set()
     while len(balanced) < len(places):
         added = False
         for bucket in bucket_order:
             if not buckets.get(bucket):
                 continue
             place = buckets[bucket].pop(0)
-            key = (place.get("name", ""), place.get("city", ""))
+            key = place_identity_key(place)
             if key in seen:
                 continue
             balanced.append(place)
@@ -615,6 +680,32 @@ def _rank_requested_regular(candidates: list[dict], intent: TravelIntent) -> lis
     return [place for _, place in sorted(scored, key=lambda item: item[0], reverse=True)]
 
 
+def _semantic_candidate_search(
+    candidates: list[dict],
+    intent: TravelIntent,
+    limit: int,
+) -> list[dict]:
+    try:
+        from app.services.embedding_store import search_semantic_candidates
+
+        return search_semantic_candidates(candidates, intent, top_k=limit)
+    except Exception:
+        return []
+
+
+def _merge_unique_candidates(*groups: list[dict]) -> list[dict]:
+    merged: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for group in groups:
+        for place in group:
+            key = semantic_key(place)
+            if key in seen:
+                continue
+            merged.append(place)
+            seen.add(key)
+    return merged
+
+
 def _blend_multiday_with_meals(
     ranked_places: list[dict],
     intent: TravelIntent,
@@ -629,6 +720,13 @@ def _blend_multiday_with_meals(
         if intent.destination.lower() == "france"
         or place.get("city", "").lower() == intent.destination.lower()
     ]
+    regular_city_matches.sort(
+        key=lambda place: (
+            0 if _has_real_photo(place) else 1,
+            -float(place.get("google_rating") or 0),
+            place.get("name", "").lower(),
+        )
+    )
     ranked_meals = _rank_meal_candidates(
         [
             place
@@ -637,14 +735,14 @@ def _blend_multiday_with_meals(
         ]
     )
     meal_target = min(len(ranked_meals), max(2, intent.duration_days * 2))
-    target_count = min(24, max(8, intent.duration_days * 6))
+    target_count = _target_place_count(intent)
     blended: list[dict] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[str] = set()
 
     def add(place: dict | None) -> None:
         if not place:
             return
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
+        key = place_identity_key(place)
         if key in seen:
             return
         blended.append(place)
@@ -677,6 +775,13 @@ def _blend_must_go_with_meals(
         if intent.destination.lower() == "france"
         or place.get("city", "").lower() == intent.destination.lower()
     ]
+    regular_city_matches.sort(
+        key=lambda place: (
+            0 if _has_real_photo(place) else 1,
+            -float(place.get("google_rating") or 0),
+            place.get("name", "").lower(),
+        )
+    )
     meal_candidates = [
         place
         for place in regular_city_matches
@@ -691,16 +796,16 @@ def _blend_must_go_with_meals(
         and requested_matchers
         and _matches_any_requested_type(place, requested_matchers)
     ], intent)
-    target_count = min(24, max(8, intent.duration_days * 6))
+    target_count = _target_place_count(intent)
     meal_target = min(len(ranked_meals), max(2, intent.duration_days * 2))
 
     blended: list[dict] = []
-    seen: set[tuple[str, str]] = set()
+    seen: set[str] = set()
 
     def add(place: dict | None) -> None:
         if not place:
             return
-        key = (place.get("name", "").lower(), place.get("city", "").lower())
+        key = place_identity_key(place)
         if key in seen:
             return
         blended.append(place)
@@ -721,6 +826,75 @@ def _blend_must_go_with_meals(
             break
         add(place)
     for place in ranked_must_go[5:]:
+        if len(blended) >= target_count:
+            break
+        add(place)
+    # Backfill remaining slots from the general city pool
+    all_city = [
+        place
+        for place in all_regular_places
+        if intent.destination.lower() == "france"
+        or place.get("city", "").lower() == intent.destination.lower()
+    ]
+    for place in all_city:
+        if len(blended) >= target_count:
+            break
+        add(place)
+
+    return blended
+
+
+def _blend_with_profile(
+    ranked_places: list[dict],
+    intent: TravelIntent,
+    all_regular_places: list[dict],
+) -> list[dict]:
+    user_type = getattr(intent, "user_type", "") or "general"
+    ratios = PROFILE_RATIOS.get(user_type, PROFILE_RATIOS["general"])
+
+    target_count = _target_place_count(intent)
+    must_go_target = max(1, round(target_count * ratios["must_go"]))
+    food_target = max(2, round(target_count * ratios["food"]))
+    gem_target = max(1, target_count - must_go_target - food_target)
+
+    must_go_bucket = [p for p in ranked_places if _is_must_go_place(p)]
+    gem_bucket = [p for p in ranked_places if _is_hidden_gem_place(p)]
+
+    all_city = [
+        place
+        for place in all_regular_places
+        if intent.destination.lower() == "france"
+        or place.get("city", "").lower() == intent.destination.lower()
+    ]
+    raw_food = [p for p in ranked_places if _is_food_or_cafe_place(p)]
+    raw_food_extra = [p for p in all_city if _is_food_or_cafe_place(p)]
+    food_bucket = _rank_meal_candidates(raw_food + raw_food_extra)
+
+    blended: list[dict] = []
+    seen: set[str] = set()
+
+    def add(place: dict | None) -> None:
+        if not place:
+            return
+        key = place_identity_key(place)
+        if key in seen:
+            return
+        blended.append(place)
+        seen.add(key)
+
+    for place in must_go_bucket[:must_go_target]:
+        add(place)
+    for place in food_bucket[:food_target]:
+        add(place)
+    for place in gem_bucket[:gem_target]:
+        add(place)
+
+    for place in ranked_places:
+        if len(blended) >= target_count:
+            break
+        add(place)
+
+    for place in all_city:
         if len(blended) >= target_count:
             break
         add(place)
@@ -761,7 +935,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
     must_go_intent = _has_must_go_intent(intent)
     all_regular_places = _all_places(include_must_go=False)
     all_places = _all_places(include_must_go=must_go_intent)
-    if must_go_intent:
+    if must_go_intent and intent.duration_days <= 2:
         all_places = [
             place
             for place in all_places
@@ -781,6 +955,10 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
 
     if not city_matches:
         city_matches = all_places
+
+    # Remove near-duplicate places (same location, similar name) that slipped
+    # through the canonical-key dedup — e.g. "Musée du Louvre" vs "The Louvre".
+    city_matches = proximity_dedupe_place_dicts(city_matches)
 
     mixed_default = _has_mixed_default_intent(intent)
 
@@ -906,7 +1084,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
                 score += 8
             if place.get("source_url"):
                 score += 2
-        if _is_permanently_closed(place):
+        if _is_closed(place):
             continue
         if intent.indoor_outdoor == "indoor" or "rainy_day_plan" in intent.request_intents:
             if _is_indoor_candidate(place):
@@ -924,9 +1102,19 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
             score -= 6
         scored.append((score, place))
 
-    ranked = [item for _, item in sorted(scored, key=lambda pair: pair[0], reverse=True)]
+    rule_ranked = [item for _, item in sorted(scored, key=lambda pair: pair[0], reverse=True)]
+    result_limit = _target_place_count(intent)
+    semantic_limit = min(len(rule_ranked), max(result_limit * 5, 80))
+    semantic_ranked = _semantic_candidate_search(rule_ranked, intent, semantic_limit)
+    ranked = (
+        _merge_unique_candidates(
+            semantic_ranked,
+            rule_ranked[: max(result_limit * 4, 60)],
+        )
+        if semantic_ranked
+        else rule_ranked
+    )
     semantic_lookup = semantic_scores(ranked, intent)
-    result_limit = min(24, max(8, intent.duration_days * 6))
     ranked = rerank_places(
         ranked,
         intent,
@@ -940,10 +1128,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
         or "rainy_day_plan" in intent.request_intents
     ):
         ranked = _balanced_mixed_order(ranked)
-    if must_go_intent:
-        ranked = _blend_must_go_with_meals(ranked, intent, all_regular_places)
-    else:
-        ranked = _blend_multiday_with_meals(ranked, intent, all_regular_places)
+    ranked = _blend_with_profile(ranked, intent, all_regular_places)
     return [
         Place(
             name=place["name"],
@@ -977,6 +1162,7 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
             source_url=place.get("source_url", ""),
             confidence=place.get("confidence", 1.0),
             photo_name=place.get("photo_name", ""),
+            wiki_thumb_url=place.get("wiki_thumb_url", ""),
         )
         for place in ranked[:result_limit]
     ]

@@ -5,6 +5,7 @@ import re
 from collections import Counter
 
 from app.schemas.travel import TravelIntent
+from app.services.place_identity import place_identity_key
 
 
 SYNONYMS = {
@@ -71,6 +72,10 @@ def place_text(place: dict) -> str:
     return " ".join(part for part in parts if part)
 
 
+def semantic_key(place: dict) -> tuple[str, str]:
+    return (place_identity_key(place), place.get("city", "").lower())
+
+
 def cosine_similarity(left_text: str, right_text: str) -> float:
     left = Counter(expand_tokens(tokenize(left_text)))
     right = Counter(expand_tokens(tokenize(right_text)))
@@ -102,7 +107,7 @@ def semantic_scores(
     # TF-IDF fallback (used when embedding cache hasn't been built yet)
     text = query_text(intent, original_query)
     return {
-        (place.get("name", "").lower(), place.get("city", "").lower()): cosine_similarity(
+        semantic_key(place): cosine_similarity(
             text,
             place_text(place),
         )

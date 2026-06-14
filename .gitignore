@@ -30,3 +30,17 @@ Thumbs.db
 
 # Local scratch files
 tmp_*.txt
+.codex_tmp/
+*.zip
+*.tgz
+*.pem
+patch*.zip
+patch*.tgz
+backend_deploy.zip
+backend_v2.zip
+backend_v2.tgz
+backend_route_fix.zip
+backend_route_fix.tgz
+bucket-policy.json
+deploy_*.sh
+reports/

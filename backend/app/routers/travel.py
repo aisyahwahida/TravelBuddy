@@ -45,6 +45,16 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
 
         session_id = ensure_session_id(request.session_id)
 
+        # Fast path: answer follow-up questions from session context
+        if orchestrator.should_try_followup(request):
+            yield fmt("status", json.dumps({"message": "Looking up your itinerary…"}))
+            followup = await run_in_threadpool(orchestrator.answer_followup, request, session_id)
+            if followup:
+                save_chat_turn(request, followup)
+                yield fmt("result", followup.model_dump_json())
+                yield fmt("done", "{}")
+                return
+
         yield fmt("status", json.dumps({"message": "Analyzing your travel preferences..."}))
         intent = await run_in_threadpool(orchestrator.extract_intent, request)
 

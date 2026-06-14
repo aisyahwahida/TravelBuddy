@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -32,6 +34,7 @@ class Place(BaseModel):
     source_url: str = ""
     confidence: float = Field(default=1.0, ge=0, le=1)
     photo_name: str = ""
+    wiki_thumb_url: str = ""
 
 
 class TravelIntent(BaseModel):
@@ -51,6 +54,9 @@ class TravelIntent(BaseModel):
     time_of_day: str = ""
     transportation: str = ""
     walking_constraints: str = ""
+    stay_location: str = ""
+    user_type: str = ""
+    first_time: bool = False
     assumptions: list[str] = Field(default_factory=list)
     clarification_question: str = ""
 
@@ -62,6 +68,15 @@ class ItineraryDay(BaseModel):
     stops: list[Place] = Field(default_factory=list)
 
 
+class LocationAnchor(BaseModel):
+    name: str
+    city: str = ""
+    address: str = ""
+    latitude: float
+    longitude: float
+    google_maps_url: str = ""
+
+
 class Itinerary(BaseModel):
     title: str
     summary: str
@@ -71,6 +86,7 @@ class Itinerary(BaseModel):
     days: list[ItineraryDay] = Field(default_factory=list)
     avoidance_notes: list[str]
     practical_notes: list[str] = Field(default_factory=list)
+    start_location: LocationAnchor | None = None
 
 
 class ChatRequest(BaseModel):
@@ -89,6 +105,7 @@ class AlternativePlace(BaseModel):
     source_url: str = ""
     latitude: float = 0.0
     longitude: float = 0.0
+    photo_name: str = ""
 
 
 class EvidenceItem(BaseModel):
@@ -107,6 +124,7 @@ class ChatResponse(BaseModel):
     evidence: list[EvidenceItem] = Field(default_factory=list)
     alternative_options: list[AlternativePlace] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
+    is_followup: bool = False
 
     @field_validator("alternative_options", mode="before")
     @classmethod

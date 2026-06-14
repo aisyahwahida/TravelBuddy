@@ -7,9 +7,12 @@ from app.services.closed_places import is_permanently_closed_place
 
 
 def is_closed_place(place: Place) -> bool:
+    status = place.business_status.upper()
+    open_status = place.open_status_label.lower()
     return (
-        place.business_status == "CLOSED_PERMANENTLY"
-        or "permanently closed" in place.open_status_label.lower()
+        status in {"CLOSED_PERMANENTLY", "CLOSED_TEMPORARILY"}
+        or "permanently closed" in open_status
+        or "temporarily closed" in open_status
         or is_permanently_closed_place(place.name, place.city)
     )
 

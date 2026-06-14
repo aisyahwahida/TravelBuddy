@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from app.services.extractor import extract_travel_intent
+from app.services.place_identity import place_identity_key
 from app.services.planner import build_itinerary
 from app.services.retriever import retrieve_places
 
@@ -15,7 +16,7 @@ def evaluate_prompt(prompt: str) -> dict:
     itinerary = build_itinerary(intent, places) if places else None
     flattened = itinerary.stops if itinerary else []
     duplicate_count = len(flattened) - len(
-        {(place.name.lower(), place.city.lower()) for place in flattened}
+        {place_identity_key(place) for place in flattened}
     )
     return {
         "prompt": prompt,

@@ -110,13 +110,17 @@ def _clarification_question(intent: TravelIntent, message: str) -> str:
 
 
 def enrich_preferences(message: str, intent: TravelIntent) -> TravelIntent:
-    request_intents = classify_user_intents(message)
-    food_preference = _first_matching_label(message, FOOD_TERMS)
-    indoor_outdoor = _extract_indoor_outdoor(message)
-    time_of_day = _extract_time_of_day(message)
-    transportation, walking_constraints = _extract_transportation(message)
-    group_type = _extract_group_type(message, intent.travel_style)
+    classified_intents = classify_user_intents(message)
+    request_intents = list(dict.fromkeys(intent.request_intents + classified_intents))
+    food_preference = intent.food_preference or _first_matching_label(message, FOOD_TERMS)
+    indoor_outdoor = intent.indoor_outdoor or _extract_indoor_outdoor(message)
+    time_of_day = intent.time_of_day or _extract_time_of_day(message)
+    inferred_transportation, inferred_walking_constraints = _extract_transportation(message)
+    transportation = intent.transportation or inferred_transportation
+    walking_constraints = intent.walking_constraints or inferred_walking_constraints
+    group_type = intent.group_type or _extract_group_type(message, intent.travel_style)
     assumptions = _build_assumptions(message, intent)
+    clarification_question = intent.clarification_question or _clarification_question(intent, message)
 
     return intent.model_copy(
         update={
@@ -128,6 +132,6 @@ def enrich_preferences(message: str, intent: TravelIntent) -> TravelIntent:
             "walking_constraints": walking_constraints,
             "group_type": group_type,
             "assumptions": assumptions,
-            "clarification_question": _clarification_question(intent, message),
+            "clarification_question": clarification_question,
         }
     )

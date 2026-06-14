@@ -12,6 +12,9 @@ FRANCE_PLACES = [
         "latitude": 48.8722,
         "longitude": 2.3639,
         "tags": ["paris", "walks", "local", "cafes", "bookstores", "quiet"],
+        "source_type": "curated",
+        "source_title": "Paris Unlocked: Canal Saint-Martin neighborhood guide",
+        "source_url": "https://www.parisunlocked.com/paris-neighbourhoods/canal-st-martin-and-republique/paris-canal-saint-martin-neighborhood-guide/",
     },
     {
         "name": "Marche d'Aligre",
@@ -26,6 +29,9 @@ FRANCE_PLACES = [
         "latitude": 48.8497,
         "longitude": 2.3786,
         "tags": ["paris", "food", "markets", "local", "cheese", "budget"],
+        "source_type": "curated",
+        "source_title": "Visit Paris Region: Marche d'Aligre",
+        "source_url": "https://www.visitparisregion.com/en/marche-d-aligre",
     },
     {
         "name": "La Butte Bergeyre",
@@ -40,6 +46,9 @@ FRANCE_PLACES = [
         "latitude": 48.8785,
         "longitude": 2.3765,
         "tags": ["paris", "views", "quiet", "local", "hidden", "walks"],
+        "source_type": "curated",
+        "source_title": "Un Jour de Plus a Paris: La Butte Bergeyre walk",
+        "source_url": "https://www.unjourdeplusaparis.com/en/paris-balades/promenade-butte-bergeyre",
     },
     {
         "name": "Passage Moliere",
@@ -54,6 +63,9 @@ FRANCE_PLACES = [
         "latitude": 48.8637,
         "longitude": 2.3513,
         "tags": ["paris", "bookstores", "history", "walks", "quiet"],
+        "source_type": "curated",
+        "source_title": "Paris.fr: Passage Moliere",
+        "source_url": "https://www.paris.fr/pages/passage-moliere-vent-de-modernite-pour-lieu-historique-22275",
     },
     {
         "name": "Musee Carnavalet",
@@ -170,6 +182,9 @@ FRANCE_PLACES = [
         "latitude": 48.8575,
         "longitude": 2.3404,
         "tags": ["paris", "river", "views", "quiet", "romantic"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: Square du Vert-Galant",
+        "source_url": "https://fr.wikipedia.org/wiki/Square_du_Vert-Galant",
     },
     {
         "name": "Rue des Martyrs",
@@ -184,6 +199,9 @@ FRANCE_PLACES = [
         "latitude": 48.8782,
         "longitude": 2.3397,
         "tags": ["paris", "food", "cafes", "markets", "walks"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: Rue des Martyrs",
+        "source_url": "https://en.wikipedia.org/wiki/Rue_des_Martyrs",
     },
     {
         "name": "Boot Cafe",
@@ -369,6 +387,9 @@ FRANCE_PLACES = [
         "latitude": 45.7741,
         "longitude": 4.8322,
         "tags": ["lyon", "local", "walks", "shops", "food", "history"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: La Croix-Rousse",
+        "source_url": "https://en.wikipedia.org/wiki/La_Croix-Rousse",
     },
     {
         "name": "Slake Coffee House",
@@ -384,8 +405,8 @@ FRANCE_PLACES = [
         "longitude": 4.8357,
         "tags": ["lyon", "cafes", "coffee", "local"],
         "source_type": "curated",
-        "source_title": "TravelBuddy curated cafe seed",
-        "source_url": "",
+        "source_title": "Slake Coffee House official site",
+        "source_url": "https://www.slake-coffee.com/",
     },
     {
         "name": "Les Halles de Lyon Paul Bocuse",
@@ -400,6 +421,9 @@ FRANCE_PLACES = [
         "latitude": 45.7638,
         "longitude": 4.8509,
         "tags": ["lyon", "food", "markets", "local", "cheese"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: Halles de Lyon-Paul Bocuse",
+        "source_url": "https://fr.wikipedia.org/wiki/Halles_de_Lyon-Paul_Bocuse",
     },
     {
         "name": "Noailles Market",
@@ -414,6 +438,9 @@ FRANCE_PLACES = [
         "latitude": 43.2966,
         "longitude": 5.3796,
         "tags": ["marseille", "food", "markets", "local", "budget"],
+        "source_type": "curated",
+        "source_title": "Marseille Tourism: Noailles district",
+        "source_url": "https://www.marseille-tourisme.com/en/discover-marseille/culture-heritage/the-districts-of-marseille/noailles-district/",
     },
     {
         "name": "Vallon des Auffes",
@@ -428,6 +455,9 @@ FRANCE_PLACES = [
         "latitude": 43.2853,
         "longitude": 5.3501,
         "tags": ["marseille", "sea", "views", "walks", "local"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: Vallon des Auffes",
+        "source_url": "https://en.wikipedia.org/wiki/Vallon_des_Auffes",
     },
     {
         "name": "Cours Saleya Flower Market",
@@ -442,6 +472,9 @@ FRANCE_PLACES = [
         "latitude": 43.6956,
         "longitude": 7.2769,
         "tags": ["nice", "markets", "food", "flowers", "walks"],
+        "source_type": "curated",
+        "source_title": "The Good Life France: Cours Saleya Market",
+        "source_url": "https://thegoodlifefrance.com/cours-saleya-market-in-nice-france/",
     },
     {
         "name": "Marche des Capucins",
@@ -456,6 +489,9 @@ FRANCE_PLACES = [
         "latitude": 44.8319,
         "longitude": -0.5712,
         "tags": ["bordeaux", "food", "markets", "local", "wine"],
+        "source_type": "curated",
+        "source_title": "Bordeaux Tourism: Marche des Capucins",
+        "source_url": "https://www.bordeaux-tourisme.com/activite-equipement-loisirs/marche-capucins.html",
     },
     {
         "name": "La Petite France Side Streets",
@@ -470,6 +506,9 @@ FRANCE_PLACES = [
         "latitude": 48.5817,
         "longitude": 7.7408,
         "tags": ["strasbourg", "history", "walks", "views", "quiet"],
+        "source_type": "curated",
+        "source_title": "Wikipedia: Petite France, Strasbourg",
+        "source_url": "https://en.wikipedia.org/wiki/Petite_France,_Strasbourg",
     },
     {
         "name": "Wazemmes Market",
@@ -484,6 +523,9 @@ FRANCE_PLACES = [
         "latitude": 50.6268,
         "longitude": 3.0523,
         "tags": ["lille", "food", "markets", "local", "budget"],
+        "source_type": "curated",
+        "source_title": "Lille Tourism: Wazemmes Market",
+        "source_url": "https://en.lilletourism.com/explore/hello-gastronomie/market-appointments/wazemmes-market/",
     },
     {
         "name": "Le Bon Marche",

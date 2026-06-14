@@ -29,6 +29,7 @@ export type Place = {
   source_url: string;
   confidence: number;
   photo_name: string;
+  wiki_thumb_url?: string;
 };
 
 export type AlternativePlace = {
@@ -41,6 +42,7 @@ export type AlternativePlace = {
   source_url: string;
   latitude: number;
   longitude: number;
+  photo_name: string;
 };
 
 export type TravelIntent = {
@@ -53,6 +55,16 @@ export type TravelIntent = {
   budget: string;
   mood: string;
   travel_style: string;
+  stay_location?: string;
+};
+
+export type LocationAnchor = {
+  name: string;
+  city?: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  google_maps_url?: string;
 };
 
 export type EvidenceItem = {
@@ -77,6 +89,7 @@ export type Itinerary = {
   }[];
   avoidance_notes: string[];
   practical_notes: string[];
+  start_location?: LocationAnchor | null;
 };
 
 export type ChatResponse = {
@@ -86,4 +99,5 @@ export type ChatResponse = {
   session_id: string;
   evidence: EvidenceItem[];
   alternative_options: AlternativePlace[];
+  is_followup?: boolean;
 };

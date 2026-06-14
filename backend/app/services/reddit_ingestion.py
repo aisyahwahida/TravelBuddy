@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -13,6 +15,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from app.schemas.travel import Place
+from app.services.place_identity import dedupe_place_dicts
 from app.services.luxia_client import LuxiaClient, extract_json_object
 
 load_dotenv()
@@ -549,12 +552,11 @@ def extract_places_with_luxia(snippets: list[RedditSnippet]) -> list[Place]:
     if not client.is_configured:
         raise RuntimeError("LUXIA_API_KEY is required to extract Reddit places.")
 
-    deduped: dict[str, Place] = {}
+    extracted_dicts: list[dict] = []
     batch_size = int(os.getenv("REDDIT_EXTRACT_BATCH_SIZE", "35"))
     for start in range(0, len(snippets), batch_size):
         batch = snippets[start : start + batch_size]
         for place in _extract_places_batch(client, batch):
-            key = f"{place.name.lower()}::{place.city.lower()}"
             place.source_type = "reddit"
             if not place.source_title:
                 place.source_title = "Reddit recommendation thread"
@@ -564,9 +566,9 @@ def extract_places_with_luxia(snippets: list[RedditSnippet]) -> list[Place]:
                     "https://www.google.com/maps/search/?api=1"
                     f"&query={place.latitude},{place.longitude}"
                 )
-            deduped[key] = place
+            extracted_dicts.append(place.model_dump())
 
-    return list(deduped.values())
+    return [Place.model_validate(place) for place in dedupe_place_dicts(extracted_dicts)]
 
 
 def _load_existing_reddit_places() -> list[Place]:
@@ -588,11 +590,12 @@ def save_reddit_places(
             "No Reddit places were extracted; keeping existing reddit_places.json."
         )
     existing_places = _load_existing_reddit_places() if merge_existing else []
-    deduped: dict[str, Place] = {}
-    for place in [*existing_places, *places]:
-        key = f"{place.name.strip().lower()}::{place.city.strip().lower()}"
-        deduped[key] = place
-    merged_places = list(deduped.values())
+    merged_places = [
+        Place.model_validate(place)
+        for place in dedupe_place_dicts(
+            [place.model_dump() for place in [*existing_places, *places]]
+        )
+    ]
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "Incremental Reddit extraction from API/public Reddit JSON",

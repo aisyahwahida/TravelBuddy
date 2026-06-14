@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
-import type { Place } from "./types";
+import type { LocationAnchor, Place } from "./types";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
 const PARIS = { lat: 48.8566, lng: 2.3522 };
@@ -21,12 +21,13 @@ function getMapsApi(): Promise<typeof google.maps> {
 
 type Props = {
   stops: Place[];
+  startLocation?: LocationAnchor | null;
   selectedIndex: number;
   onSelectStop: (index: number) => void;
   startIndex?: number;
 };
 
-export default function GoogleMap({ stops, selectedIndex, onSelectStop, startIndex = 0 }: Props) {
+export default function GoogleMap({ stops, startLocation, selectedIndex, onSelectStop, startIndex = 0 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
@@ -41,10 +42,13 @@ export default function GoogleMap({ stops, selectedIndex, onSelectStop, startInd
 
       const { AdvancedMarkerElement } = (await importLibrary("marker")) as google.maps.MarkerLibrary;
 
-      const center = stops.length
+      const allPoints = startLocation
+        ? [{ latitude: startLocation.latitude, longitude: startLocation.longitude }, ...stops]
+        : stops;
+      const center = allPoints.length
         ? {
-            lat: stops.reduce((s, p) => s + p.latitude, 0) / stops.length,
-            lng: stops.reduce((s, p) => s + p.longitude, 0) / stops.length,
+            lat: allPoints.reduce((s, p) => s + p.latitude, 0) / allPoints.length,
+            lng: allPoints.reduce((s, p) => s + p.longitude, 0) / allPoints.length,
           }
         : PARIS;
 
@@ -69,6 +73,19 @@ export default function GoogleMap({ stops, selectedIndex, onSelectStop, startInd
       if (!stops.length) return;
 
       const path: google.maps.LatLngLiteral[] = [];
+
+      if (startLocation) {
+        const stayPin = document.createElement("div");
+        stayPin.className = "gmap-pin";
+        stayPin.textContent = "S";
+        new AdvancedMarkerElement({
+          map: mapRef.current,
+          position: { lat: startLocation.latitude, lng: startLocation.longitude },
+          title: startLocation.name,
+          content: stayPin,
+        });
+        path.push({ lat: startLocation.latitude, lng: startLocation.longitude });
+      }
 
       stops.forEach((stop, index) => {
         const pos = { lat: stop.latitude, lng: stop.longitude };
@@ -101,7 +118,7 @@ export default function GoogleMap({ stops, selectedIndex, onSelectStop, startInd
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stops, startIndex]);
+  }, [stops, startIndex, startLocation]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, index) => {
