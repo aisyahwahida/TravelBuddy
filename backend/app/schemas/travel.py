@@ -95,6 +95,13 @@ class ChatRequest(BaseModel):
     session_id: str = ""
 
 
+class RecommendedForItem(BaseModel):
+    day_index: int
+    stop_index: int
+    replacement_score: float
+    route_delta_minutes: float
+
+
 class AlternativePlace(BaseModel):
     name: str
     category: str = ""
@@ -106,6 +113,12 @@ class AlternativePlace(BaseModel):
     latitude: float = 0.0
     longitude: float = 0.0
     photo_name: str = ""
+    # Contextual alternative fields
+    compatible_slot_types: list[str] = Field(default_factory=list)
+    recommended_for: list[RecommendedForItem] = Field(default_factory=list)
+    replacement_score: float = 0.0
+    route_delta_minutes: float = 0.0
+    distance_from_day_center_km: float = 0.0
 
 
 class EvidenceItem(BaseModel):

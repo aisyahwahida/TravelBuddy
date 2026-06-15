@@ -348,6 +348,7 @@ def _extract_destination(message: str) -> str:
 def _extract_duration_days(message: str) -> int | None:
     lowered = message.lower()
     number_words = "|".join(NUMBER_WORDS)
+
     day_match = re.search(rf"\b(?P<count>\d+|{number_words})\s*[- ]?(day|days)\b", lowered)
     if day_match:
         raw = day_match.group("count")
@@ -360,6 +361,16 @@ def _extract_duration_days(message: str) -> int | None:
         raw = week_match.group("count")
         count = int(raw) if raw.isdigit() else NUMBER_WORDS.get(raw, 1)
         return max(1, min(count * 7, 14))
+
+    # "a week" / "staying a week" / "for a week"
+    if re.search(r"\ba\s+week\b", lowered):
+        return 7
+
+    # "a few days" → 3,  "a couple of days" → 2
+    if re.search(r"\ba\s+few\s+(?:more\s+)?days?\b", lowered):
+        return 3
+    if re.search(r"\ba\s+couple\s+(?:of\s+)?days?\b", lowered):
+        return 2
 
     if "weekend" in lowered:
         return 2
@@ -556,6 +567,7 @@ def _merge_with_luxia(
 
 
 def extract_travel_intent(message: str) -> TravelIntent:
+    from app.services.intent_specificity import apply_default_profile
     rule_intent = enrich_preferences(message, _extract_core_intent(message))
     luxia_hint = _extract_with_luxia(message, rule_intent)
     merged = _merge_with_luxia(message, rule_intent, luxia_hint)
@@ -563,7 +575,9 @@ def extract_travel_intent(message: str) -> TravelIntent:
     user_type = _classify_user_type(
         message, merged.interests, merged.group_type, merged.travel_style
     )
-    return merged.model_copy(update={
+    classified = merged.model_copy(update={
         "user_type": user_type,
         "first_time": user_type == "first_time_visitor",
     })
+    # Apply default balanced profile for low-specificity prompts (only fills missing fields)
+    return apply_default_profile(classified)

@@ -24,12 +24,16 @@ MAX_STOPS_PER_DAY = 6
 MAX_RETRIEVED_PLACES = 84
 
 PROFILE_RATIOS: dict[str, dict[str, float]] = {
-    "general":            {"must_go": 0.30, "hidden_gem": 0.30, "food": 0.40},
-    "first_time_visitor": {"must_go": 0.35, "hidden_gem": 0.45, "food": 0.20},
-    "returning_visitor":  {"must_go": 0.15, "hidden_gem": 0.65, "food": 0.20},
-    "local_resident":     {"must_go": 0.05, "hidden_gem": 0.75, "food": 0.20},
-    "family_trip":        {"must_go": 0.30, "hidden_gem": 0.40, "food": 0.30},
-    "food_traveler":      {"must_go": 0.10, "hidden_gem": 0.40, "food": 0.50},
+    # general_specific: user has some preferences but no strong user type
+    "general":                 {"must_go": 0.30, "hidden_gem": 0.30, "food": 0.40},
+    # general_low_specificity: user gave almost no preferences — balanced 30/30/20 split
+    # (remaining ~20% fills naturally via hidden_gem bucket: scenic + culture)
+    "general_low_specificity": {"must_go": 0.30, "hidden_gem": 0.50, "food": 0.20},
+    "first_time_visitor":      {"must_go": 0.35, "hidden_gem": 0.45, "food": 0.20},
+    "returning_visitor":       {"must_go": 0.15, "hidden_gem": 0.65, "food": 0.20},
+    "local_resident":          {"must_go": 0.05, "hidden_gem": 0.75, "food": 0.20},
+    "family_trip":             {"must_go": 0.30, "hidden_gem": 0.40, "food": 0.30},
+    "food_traveler":           {"must_go": 0.10, "hidden_gem": 0.40, "food": 0.50},
 }
 
 
@@ -43,9 +47,10 @@ def _has_real_photo(place: dict) -> bool:
 
 def _target_place_count(intent: TravelIntent) -> int:
     destination = intent.destination.strip().lower()
+    # Use 2× buffer so typed-interest filtering doesn't exhaust the pool on long trips
     requested = max(
         12,
-        intent.duration_days * MAX_STOPS_PER_DAY,
+        intent.duration_days * MAX_STOPS_PER_DAY * 2,
         intent.duration_days * MIN_STOPS_PER_DAY,
     )
     if destination in {"france", "south of france", "french riviera", "cote d'azur", "côte d'azur"}:
@@ -1009,7 +1014,16 @@ def retrieve_places(intent: TravelIntent) -> list[Place]:
                 if _matches_any_requested_type(place, requested_matchers)
             ]
             if len(typed_matches) >= 4:
-                city_matches = typed_matches
+                if len(typed_matches) >= _target_place_count(intent):
+                    # Pool is large enough — restrict to requested types only
+                    city_matches = typed_matches
+                else:
+                    # Pool too small for the trip length — put typed first so they
+                    # score highest, but keep general places as overflow so later
+                    # days don't run out of candidates
+                    typed_keys = {place_identity_key(p) for p in typed_matches}
+                    non_typed = [p for p in city_matches if place_identity_key(p) not in typed_keys]
+                    city_matches = typed_matches + non_typed
 
     if intent.indoor_outdoor == "indoor" or "rainy_day_plan" in intent.request_intents:
         indoor_matches = [place for place in city_matches if _is_indoor_candidate(place)]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 
 from app.schemas.travel import ChatRequest, ChatResponse, Itinerary, TravelIntent
@@ -9,15 +10,15 @@ from app.services.extractor import extract_travel_intent
 from app.services.google_places import resolve_stay_location
 from app.services.luxia_client import LuxiaClient
 from app.services.luxia_planner import LuxiaTravelPlanner
-from app.services.itinerary_validator import repair_itinerary, validate_itinerary
+from app.services.itinerary_validator import enforce_min_stop_quality, repair_itinerary, validate_itinerary
 from app.services.planner import build_itinerary, split_stops_by_day
 from app.services.place_safety import sanitize_itinerary, sanitize_response
-from app.services.response_formatter import (
-    build_alternative_options,
-    build_assistant_message,
-)
+from app.services.contextual_alternatives import build_contextual_alternative_options
+from app.services.response_formatter import build_assistant_message
 from app.services.retriever import retrieve_places
 from app.services.session_store import ensure_session_id, get_session, save_chat_turn
+
+logger = logging.getLogger(__name__)
 
 CONTEXT_DESTINATIONS = {
     "paris",
@@ -347,32 +348,85 @@ class TravelOrchestrator:
         The LLM is used only to write the conversational assistant message —
         it never decides which places appear or in what order.
         """
+        from app.services.intent_specificity import calculate_intent_specificity
+
+        # ── Debug: intent profile ─────────────────────────────────────────────
+        spec_score = calculate_intent_specificity(intent)
+        logger.info(
+            "plan: destination=%r duration=%d user_type=%r specificity=%d "
+            "interests=%s budget=%r mood=%r",
+            intent.destination,
+            intent.duration_days,
+            intent.user_type,
+            spec_score,
+            intent.interests,
+            intent.budget,
+            intent.mood,
+        )
+
         stay_anchor = _resolve_stay_anchor(intent)
 
         # ── 1. Deterministic itinerary ────────────────────────────────────────
         itinerary = build_itinerary(intent, places, stay_anchor=stay_anchor)
 
+        # ── Debug: post-build stop counts ─────────────────────────────────────
+        pre_repair_counts = [len(day.stops) for day in itinerary.days]
+        logger.info(
+            "plan: post-build days=%d stop_counts=%s",
+            len(itinerary.days), pre_repair_counts,
+        )
+
         # ── 2. Validate + repair ──────────────────────────────────────────────
         raw_days = [day.stops for day in itinerary.days]
         issues = validate_itinerary(raw_days, intent)
         if issues:
+            logger.info("plan: validator issues=%s", [str(i) for i in issues])
             repaired_day_stops = repair_itinerary(raw_days, places, intent)
-            # Rebuild ItineraryDay objects with repaired stops
-            from app.schemas.travel import ItineraryDay
-            repaired_days = [
-                itinerary.days[i].model_copy(update={"stops": repaired_day_stops[i]})
-                for i in range(len(itinerary.days))
-                if i < len(repaired_day_stops) and repaired_day_stops[i]
-            ]
-            itinerary = itinerary.model_copy(
-                update={
-                    "days": repaired_days,
-                    "stops": [s for day in repaired_days for s in day.stops],
-                }
-            )
+        else:
+            repaired_day_stops = raw_days
 
-        # ── 3. Assemble response ──────────────────────────────────────────────
-        used_names = {stop.name for stop in itinerary.stops}
+        # ── 3. Enforce minimum 4 stops/day (final backstop) ──────────────────
+        repaired_day_stops = enforce_min_stop_quality(repaired_day_stops, places, intent)
+
+        # ── 4. Rebuild ItineraryDay objects ───────────────────────────────────
+        from app.schemas.travel import ItineraryDay
+        repaired_days = [
+            itinerary.days[i].model_copy(update={"stops": repaired_day_stops[i]})
+            for i in range(len(itinerary.days))
+            if i < len(repaired_day_stops) and repaired_day_stops[i]
+        ]
+
+        # ── 5. Enforce exact day count (trim any excess days) ─────────────────
+        requested_days = intent.duration_days
+        if len(repaired_days) > requested_days:
+            logger.warning(
+                "plan: trimming %d extra days (got %d, requested %d)",
+                len(repaired_days) - requested_days,
+                len(repaired_days),
+                requested_days,
+            )
+            repaired_days = repaired_days[:requested_days]
+
+        itinerary = itinerary.model_copy(
+            update={
+                "days": repaired_days,
+                "stops": [s for day in repaired_days for s in day.stops],
+            }
+        )
+
+        # ── Debug: post-repair stop counts and category distribution ──────────
+        post_counts = [len(day.stops) for day in itinerary.days]
+        cat_dist: dict[str, int] = {}
+        for stop in itinerary.stops:
+            cat = stop.category.lower()
+            cat_dist[cat] = cat_dist.get(cat, 0) + 1
+        top_cats = dict(sorted(cat_dist.items(), key=lambda x: -x[1])[:5])
+        logger.info(
+            "plan: post-repair days=%d stop_counts=%s top_categories=%s",
+            len(itinerary.days), post_counts, top_cats,
+        )
+
+        # ── 6. Assemble response ──────────────────────────────────────────────
         response = ChatResponse(
             assistant_message=build_assistant_message(intent, itinerary, places),
             extracted_intent=intent,
@@ -380,7 +434,7 @@ class TravelOrchestrator:
             session_id=session_id,
             evidence=build_evidence(itinerary.stops),
             assumptions=intent.assumptions,
-            alternative_options=build_alternative_options(places, used_names),
+            alternative_options=build_contextual_alternative_options(places, itinerary, intent),
         )
         if intent.clarification_question:
             response.assistant_message = (

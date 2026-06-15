@@ -13,9 +13,17 @@ Public API used by planner.py:
   validate_itinerary_balance(days)     -> dict
 """
 
+import logging
 import math
 from app.schemas.travel import Place, TravelIntent
 from app.services.place_identity import place_identity_key
+
+logger = logging.getLogger(__name__)
+
+# Imported lazily inside _route_aware_score / build_full_itinerary to avoid
+# a startup-time circular import (geo_cluster → place_identity, not day_planner).
+# The constant is mirrored here so the import only happens once per call.
+_FAR_FROM_CENTER_KM = 3.0   # mirrors geo_cluster.FAR_FROM_CENTER_KM
 
 
 # ─── Day templates ────────────────────────────────────────────────────────────
@@ -31,6 +39,16 @@ SLOT_SEQUENCE: dict[str, list[str]] = {
         "museum_or_culture",      # 14:30 – afternoon culture
         "scenic_walk_or_open_area",  # 17:00 – wind down with a stroll
         "cafe_or_local_food",     # 19:00 – dinner
+    ],
+    # general_low_specificity: same balanced template as general but
+    # archetype boosts and profile ratios steer emphasis per day.
+    "general_low_specificity": [
+        "must_go_landmark",
+        "cafe_or_local_food",
+        "hidden_gem",
+        "museum_or_culture",
+        "scenic_walk_or_open_area",
+        "cafe_or_local_food",
     ],
     "first_time_visitor": [
         "must_go_landmark",
@@ -286,12 +304,71 @@ def calculate_base_place_score(place: Place, intent: TravelIntent) -> float:
     )
 
 
+def _route_aware_score(
+    place: Place,
+    prev_place: Place | None,
+    day_cluster: DayClusterContext | None,
+) -> float:
+    """
+    Additive route-efficiency bonus/penalty (max ~+1.3, min ~-1.4).
+    Never large enough to override the slot_bonus (±3.0/2.0).
+
+    Components
+    ----------
+    +0.6  in-cluster bonus: place belongs to the day's geographic cluster
+    +0.4  center proximity: sliding bonus from 0 km to FAR_FROM_CENTER_KM
+    +0.3  prev-stop proximity: closer previous stop = easier travel
+    -0.5× far-from-center penalty: per km beyond FAR_FROM_CENTER_KM
+    -0.04× long-leg penalty: per minute beyond 40 min
+    """
+    if day_cluster is None:
+        return 0.0
+
+    score = 0.0
+
+    # In-cluster bonus
+    key = place_identity_key(place)
+    if key in day_cluster.place_keys:
+        score += 0.6
+
+    # Distance to day centre
+    dist_to_center = _haversine(
+        place.latitude, place.longitude,
+        day_cluster.center_lat, day_cluster.center_lng,
+    )
+    if dist_to_center <= _FAR_FROM_CENTER_KM:
+        score += 0.4 * (1.0 - dist_to_center / _FAR_FROM_CENTER_KM)
+    else:
+        score -= 0.5 * (dist_to_center - _FAR_FROM_CENTER_KM)
+
+    # Proximity to previous stop + long-leg penalty
+    if prev_place is not None:
+        dist_km = _haversine(
+            prev_place.latitude, prev_place.longitude,
+            place.latitude, place.longitude,
+        )
+        # Proximity bonus: 0–0.3 over 0–3 km
+        score += max(0.0, 0.3 * (1.0 - dist_km / 3.0))
+
+        # Leg time estimate
+        if dist_km <= 1.4:
+            leg_min = max(4, round((dist_km / 4.8) * 60))
+        else:
+            leg_min = max(12, round((dist_km / 18.0) * 60 + 8))
+
+        if leg_min > 40:
+            score -= 0.04 * (leg_min - 40)  # -0.04/min above 40 min
+
+    return score
+
+
 def calculate_slot_score(
     place: Place,
     slot_type: str,
     day_so_far: list[Place],
     prev_place: Place | None,
     intent: TravelIntent,
+    day_cluster: DayClusterContext | None = None,
 ) -> float:
     """
     Final slot score combining all factors.
@@ -299,9 +376,10 @@ def calculate_slot_score(
     Full formula:
       score = calculate_base_place_score(...)
             + 0.15 * distance_efficiency
-            + 0.05 * (1 − category_diversity_penalty)
+            + 0.30 * (1 − category_diversity_penalty)
             + city_consistency_bonus          (0.20 if same city as day majority)
-            + slot_relevance                  (+1.5 if matches slot, −0.5 if not)
+            + route_aware_score               (±1.3 max, geo-cluster bonus/penalty)
+            + slot_relevance                  (+3.0 if matches slot, −2.0 if not)
             − consecutive_type_penalty        (−0.40 if same slot type as previous stop)
 
     The slot_relevance term is the key differentiator: it ensures that the
@@ -313,14 +391,12 @@ def calculate_slot_score(
     # Distance efficiency (0–1, weighted 15%)
     dist_score = calculate_distance_score(place, prev_place)
 
-    # Category diversity penalty → convert to diversity score (0–1, weighted 5%)
+    # Category diversity penalty → convert to diversity score (0–1, weighted 30%)
     cat_penalty = calculate_category_diversity_penalty(place, day_so_far)
     diversity = 1.0 - cat_penalty
 
     # City consistency: prefer the city that already dominates the day.
-    # Only apply once at least 2 stops are chosen — a single stop is not
-    # a reliable signal of the day's "majority city" and can cause the
-    # first stop to unfairly anchor all subsequent selections.
+    # Only apply once at least 2 stops are chosen.
     city_bonus = 0.0
     if len(day_so_far) >= 2:
         city_counts: dict[str, int] = {}
@@ -328,17 +404,18 @@ def calculate_slot_score(
             city_counts[p.city.lower()] = city_counts.get(p.city.lower(), 0) + 1
         dominant = max(city_counts, key=lambda c: city_counts[c])
         dominant_share = city_counts[dominant] / len(day_so_far)
-        # Only reward city match when the dominant city has a genuine majority (> 50 %)
         if place.city.lower() == dominant and dominant_share > 0.5:
             city_bonus = 0.2
 
-    weighted = base + 0.15 * dist_score + 0.30 * diversity + city_bonus
+    # Route-aware bonus/penalty (geo-cluster context)
+    route_score = _route_aware_score(place, prev_place, day_cluster)
+
+    weighted = base + 0.15 * dist_score + 0.30 * diversity + city_bonus + route_score
 
     # Slot relevance: large bonus for matching the slot, penalty for not matching
     slot_bonus = 3.0 if _matches_slot(place, slot_type) else -2.0
 
-    # Consecutive same-type penalty: avoid cafe → cafe, museum → museum, etc.
-    # (Does not apply to cafe_or_local_food which can validly appear for lunch and dinner)
+    # Consecutive same-type penalty
     consec_penalty = 0.0
     if day_so_far and slot_type not in {"cafe_or_local_food"}:
         prev = day_so_far[-1]
@@ -358,12 +435,21 @@ def get_slot_candidates(
     prev_place: Place | None,
     intent: TravelIntent,
     food_count: int = 0,
+    day_cluster: "DayClusterContext | None" = None,
+    archetype: "object | None" = None,
+    trip_category_counts: "dict[str, int] | None" = None,
 ) -> list[Place]:
     """
     Return all unused candidates ranked by slot score (highest first).
     Food places are excluded from non-food slots, and once the daily food cap
     is reached they are excluded from every slot.
+
+    Optional params:
+      archetype           — DayArchetype for archetype-level slot boosts (5+ day general trips)
+      trip_category_counts — category counts across all days so far (trip-level diversity)
     """
+    from app.services.day_archetypes import get_archetype_slot_boost, apply_archetype_tag_bias
+
     available = [p for p in all_candidates if place_identity_key(p) not in used_keys]
 
     # Enforce hard food exclusion, with one exception:
@@ -386,10 +472,37 @@ def get_slot_candidates(
         elif slot_type in NON_FOOD_SLOTS:
             available = available  # last resort: keep all to avoid empty slot
 
-    scored = [
-        (calculate_slot_score(p, slot_type, day_so_far, prev_place, intent), p)
-        for p in available
-    ]
+    # Archetype slot boost — extra bonus for slots that match this day's theme
+    archetype_slot_boost = get_archetype_slot_boost(archetype, slot_type)
+
+    scored: list[tuple[float, Place]] = []
+    for p in available:
+        base = calculate_slot_score(p, slot_type, day_so_far, prev_place, intent, day_cluster)
+
+        # Archetype tag bias (max +0.4): prefer places that fit the day's theme
+        tag_bias = apply_archetype_tag_bias(
+            {t.lower() for t in p.tags},
+            p.source_type,
+            archetype,
+        )
+        # Archetype slot boost (up to +1.0): slot-type match earns extra when day has a theme
+        slot_theme_bonus = archetype_slot_boost if _matches_slot(p, slot_type) else 0.0
+
+        # Trip-level category repetition penalty: discourage over-used categories
+        trip_cat_penalty = 0.0
+        if trip_category_counts:
+            cat = p.category.lower()
+            count = trip_category_counts.get(cat, 0)
+            user_wants = bool(
+                {i.lower() for i in intent.interests}.intersection({cat, cat.rstrip("s")})
+            )
+            if count >= 5 and not user_wants:
+                trip_cat_penalty = 0.6
+            elif count >= 3 and not user_wants:
+                trip_cat_penalty = 0.3
+
+        scored.append((base + tag_bias + slot_theme_bonus - trip_cat_penalty, p))
+
     scored.sort(key=lambda x: x[0], reverse=True)
     return [p for _, p in scored]
 
@@ -401,15 +514,18 @@ def build_balanced_day(
     day_index: int,
     intent: TravelIntent,
     used_keys: set[str],
+    day_cluster: "DayClusterContext | None" = None,
+    archetype: "object | None" = None,
+    trip_category_counts: "dict[str, int] | None" = None,
 ) -> list[Place]:
     """
     Fill one day by iterating through its slot sequence and picking the best
     available candidate for each slot.
 
     Strategy per slot:
-      1. Rank all unused candidates by calculate_slot_score().
-      2. Pick the top slot-matching place.
-      3. If nothing matches the slot, pick the overall best (avoids empty slots).
+      1. Rank all unused candidates by calculate_slot_score() (includes route bonus).
+      2. Apply archetype boosts and trip-level category penalties (optional).
+      3. Pick the top slot-matching place; fall back to best-in-pool.
       4. Mark the chosen place as used so it cannot appear on another day.
     """
     user_type = getattr(intent, "user_type", "") or "general"
@@ -423,12 +539,14 @@ def build_balanced_day(
         ranked = get_slot_candidates(
             candidates, slot_type, used_keys, day_so_far, prev_place, intent,
             food_count=food_count,
+            day_cluster=day_cluster,
+            archetype=archetype,
+            trip_category_counts=trip_category_counts,
         )
         if not ranked:
             break
 
         # Prefer a place that actually matches this slot; fall back to best in pool.
-        # The pool already excludes food from non-food slots, so ranked[0] is safe.
         chosen = next((p for p in ranked if _matches_slot(p, slot_type)), ranked[0])
 
         key = place_identity_key(chosen)
@@ -443,6 +561,24 @@ def build_balanced_day(
 
 # ─── Full itinerary builder ───────────────────────────────────────────────────
 
+def _day_route_stats(stops: list[Place]) -> tuple[float, int]:
+    """Return (total_km, max_leg_minutes) for a single day's stops."""
+    total_km = 0.0
+    max_min = 0
+    for i in range(1, len(stops)):
+        km = _haversine(
+            stops[i - 1].latitude, stops[i - 1].longitude,
+            stops[i].latitude, stops[i].longitude,
+        )
+        total_km += km
+        if km <= 1.4:
+            leg_min = max(4, round((km / 4.8) * 60))
+        else:
+            leg_min = max(12, round((km / 18.0) * 60 + 8))
+        max_min = max(max_min, leg_min)
+    return total_km, max_min
+
+
 def build_full_itinerary(
     places: list[Place],
     intent: TravelIntent,
@@ -450,17 +586,103 @@ def build_full_itinerary(
     """
     Build a balanced day-by-day itinerary using slot-based selection.
 
-    Each day gets a composition template (landmark + cafe + hidden gem + culture +
-    walk + dinner).  No place is reused across days.  Later days naturally get
-    different (less iconic, more local) candidates as the pool is consumed.
+    Pipeline:
+      1. For France-wide general trips: pre-assign cities to days (city allocator).
+      2. Geo-cluster within the assigned city (or globally for city-specific trips).
+      3. For 5+ day general trips: assign a day archetype that biases slot selection.
+      4. Fill each day's 6 slots; track trip-level category counts to prevent repetition.
     """
+    from app.services.geo_cluster import cluster_places, select_day_cluster
+    from app.services.day_archetypes import get_day_archetype
+    from app.services.city_allocator import (
+        is_france_country_trip,
+        allocate_cities_for_country_trip,
+        build_city_day_blocks,
+    )
+
+    duration = intent.duration_days
+
+    # ── City allocation for France-wide general trips ─────────────────────────
+    city_schedule: list[str] = []
+    city_blocks: dict[str, list[Place]] = {}
+    city_cluster_cache: dict[str, list] = {}
+
+    if is_france_country_trip(intent):
+        city_schedule = allocate_cities_for_country_trip(intent, places, duration)
+        if city_schedule:
+            city_blocks = build_city_day_blocks(places)
+            logger.info(
+                "build_full_itinerary: France city schedule → %s",
+                city_schedule,
+            )
+
+    # ── Global clusters (used for single-city trips or France fallback) ───────
+    global_clusters = cluster_places(places, intent)
+    used_cluster_ids: set[int] = set()
     used_keys: set[str] = set()
     days: list[list[Place]] = []
+    trip_category_counts: dict[str, int] = {}
 
-    for day_index in range(intent.duration_days):
-        day_stops = build_balanced_day(places, day_index, intent, used_keys)
+    for day_index in range(duration):
+        day_number = day_index + 1
+
+        # Resolve candidate pool (city-filtered or global)
+        if city_schedule and day_index < len(city_schedule):
+            assigned_city = city_schedule[day_index]
+            city_candidates = city_blocks.get(assigned_city, places)
+
+            # Per-city clusters (cache to avoid recomputing)
+            if assigned_city not in city_cluster_cache:
+                city_cluster_cache[assigned_city] = cluster_places(city_candidates, intent)
+            city_used_ids = used_cluster_ids   # share the set; per-city clusters have unique ids
+            day_cluster = select_day_cluster(
+                city_cluster_cache[assigned_city], city_used_ids, day_index, intent
+            )
+            day_candidates = city_candidates
+        else:
+            day_cluster = select_day_cluster(global_clusters, used_cluster_ids, day_index, intent)
+            day_candidates = places
+
+        if day_cluster is not None:
+            used_cluster_ids.add(day_cluster.cluster_id)
+
+        # Day archetype (5+ day general trips only)
+        archetype = get_day_archetype(day_number, duration, intent)
+
+        day_stops = build_balanced_day(
+            day_candidates,
+            day_index,
+            intent,
+            used_keys,
+            day_cluster,
+            archetype=archetype,
+            trip_category_counts=trip_category_counts,
+        )
         days.append(day_stops)
 
+        # Update trip-level category counts
+        for stop in day_stops:
+            cat = stop.category.lower()
+            trip_category_counts[cat] = trip_category_counts.get(cat, 0) + 1
+
+        if logger.isEnabledFor(logging.DEBUG) and day_stops:
+            total_km, max_leg = _day_route_stats(day_stops)
+            categories = [s.category for s in day_stops]
+            logger.debug(
+                "Day %d: %d stops | cluster=%s | archetype=%s | route_km=%.1f | "
+                "max_leg=%dmin | categories=%s",
+                day_number, len(day_stops),
+                day_cluster.cluster_id if day_cluster else "none",
+                archetype.name if archetype else "none",
+                total_km, max_leg, categories,
+            )
+
+    logger.info(
+        "build_full_itinerary: %d days | stops/day=%s | trip_categories=%s",
+        len(days),
+        [len(d) for d in days],
+        dict(sorted(trip_category_counts.items(), key=lambda x: -x[1])[:5]),
+    )
     return days
 
 

@@ -16,6 +16,54 @@ def _has_real_photo(place: dict) -> bool:
     return bool(str(place.get("photo_name", "")).strip() or str(place.get("wiki_thumb_url", "")).strip())
 
 
+def _general_quality_score(place: dict) -> float:
+    """
+    Balanced quality score for low-specificity prompts where the semantic query
+    is too vague to be a reliable signal.
+
+    Weights:
+      0.25 must-go / iconic places
+      0.25 hidden-gem / non-touristy places
+      0.20 source confidence (reddit, curated, google)
+      0.15 rating quality (above 3 stars)
+      0.10 has photo + map_url bonus
+      -0.20 tourist-trap penalty
+    """
+    tags = _tags(place)
+    is_landmark = bool({"must_go", "landmark", "iconic", "famous"}.intersection(tags))
+    is_curated = place.get("source_type") == "curated_must_go"
+    must_go_s = min(1.0, (1.0 if is_landmark else 0.0) + (0.5 if is_curated else 0.0))
+
+    is_gem = place.get("tourist_trap_risk") == "low" and not is_landmark
+    reddit_b = 0.3 if place.get("source_type") == "reddit" else 0.0
+    gem_s = min(1.0, (1.0 if is_gem else 0.0) + reddit_b)
+
+    source_s = (
+        1.0 if place.get("source_type") in {"reddit", "curated_must_go", "google_maps"}
+        else 0.5
+    )
+    if place.get("source_url"):
+        source_s = min(1.0, source_s + 0.2)
+
+    rating = float(place.get("google_rating") or 0)
+    rating_s = min(1.0, max(0.0, (rating - 3.0) / 2.0)) if rating >= 3.0 else 0.0
+
+    photo_b = 0.5 if _has_real_photo(place) else 0.0
+    map_b = 0.5 if place.get("google_maps_url") else 0.0
+    media_s = (photo_b + map_b)  # 0–1
+
+    trap_s = 1.0 if place.get("tourist_trap_risk") == "high" else 0.0
+
+    return (
+        0.25 * must_go_s
+        + 0.25 * gem_s
+        + 0.20 * source_s
+        + 0.15 * rating_s
+        + 0.10 * media_s
+        - 0.20 * trap_s
+    )
+
+
 def metadata_score(place: dict, intent: TravelIntent) -> float:
     tags = _tags(place)
     text = _text(place)
@@ -94,6 +142,11 @@ def metadata_score(place: dict, intent: TravelIntent) -> float:
     elif user_type == "food_traveler":
         if any(t in tags for t in ["restaurant", "bistro", "cafe", "coffee", "market", "food", "wine"]):
             score += 2.5
+    elif user_type == "general_low_specificity":
+        # Balanced: reward both landmarks and hidden gems, penalise tourist traps
+        score += 0.20 * must_go_score
+        score += 0.15 * hidden_gem_score
+        score -= 0.10 * tourist_trap_score
 
     return score
 
@@ -134,13 +187,23 @@ def rerank_places(
     semantic_score_lookup: dict[tuple[str, str], float],
     limit: int,
 ) -> list[dict]:
+    user_type = getattr(intent, "user_type", "") or "general"
+    is_low_spec = user_type == "general_low_specificity"
+
     ranked = []
     for place in places:
         semantic = semantic_score_lookup.get(semantic_key(place), 0.0)
-        # semantic is 0–1; metadata is roughly -8 to +18.
-        # Weight at 5× so semantic contributes ~20% of a typical combined score,
-        # preventing it from overriding practical signals like source, rating, and photo.
-        score = semantic * 5 + metadata_score(place, intent)
+
+        if is_low_spec:
+            # Low-specificity: reduce semantic weight (vague query = noisy signal)
+            # and add general quality score to ensure balanced, well-rounded candidates.
+            # semantic * 1 ≈ 5% vs the normal 5× ≈ 20% contribution.
+            gen_score = _general_quality_score(place)
+            score = semantic * 1.0 + metadata_score(place, intent) + gen_score * 5.0
+        else:
+            # Specific prompts: keep existing blend (semantic 5× + metadata)
+            score = semantic * 5 + metadata_score(place, intent)
+
         ranked.append((score, place))
 
     ranked.sort(key=lambda item: item[0], reverse=True)

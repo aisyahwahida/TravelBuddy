@@ -563,8 +563,10 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [dragInvalid, setDragInvalid] = useState<string | null>(null);
   const [dragReorderOver, setDragReorderOver] = useState<string | null>(null);
   const [draggingStop, setDraggingStop] = useState<string | null>(null);
+  const [draggingAlt, setDraggingAlt] = useState<AlternativePlace | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>(loadSessions);
   const [mobileTab, setMobileTab] = useState<MobileTab>("Plan");
@@ -606,6 +608,27 @@ export default function App() {
     : [];
 
   const dayStartIndex = 0;
+
+  function canDropAlternative(alt: AlternativePlace, dayIndex: number, stopIndex: number): boolean {
+    if (!alt.recommended_for || alt.recommended_for.length === 0) {
+      return true; // legacy alt without contextual data — allow drop
+    }
+    return alt.recommended_for.some(
+      (r) => r.day_index === dayIndex && r.stop_index === stopIndex && r.replacement_score >= 0.25
+    );
+  }
+
+  // Sort alternatives by how well they fit the currently selected stop.
+  const sortedAlts = [...planAlts].sort((a, b) => {
+    const scoreFor = (alt: AlternativePlace) => {
+      if (!alt.recommended_for || alt.recommended_for.length === 0) return alt.replacement_score ?? 0;
+      const rec = alt.recommended_for.find(
+        (r) => r.day_index === selectedMapDayIndex && r.stop_index === selectedStopIndex
+      );
+      return rec ? rec.replacement_score : -0.5; // incompatible alts sink to the bottom
+    };
+    return scoreFor(b) - scoreFor(a);
+  });
 
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
@@ -806,6 +829,7 @@ async function handleExport() {
   }
 
   function handleDrop(alt: AlternativePlace, dayIndex: number, stopIndex: number) {
+    if (!canDropAlternative(alt, dayIndex, stopIndex)) return;
     const replaced = planDays[dayIndex].stops[stopIndex];
     setPlanDays((prev) => {
       const days = prev.map((d) => ({ ...d, stops: [...d.stops] }));
@@ -816,6 +840,7 @@ async function handleExport() {
       placeToAlt(replaced),
       ...prevAlts.filter((a) => a.name !== alt.name),
     ]);
+    setDraggingAlt(null);
   }
 
   function handleStopReorder(fromDay: number, fromStop: number, toDay: number, toStop: number) {
@@ -846,6 +871,7 @@ async function handleExport() {
         result={result}
         planDays={planDays}
         planAlts={planAlts}
+        sortedAlts={sortedAlts}
         selectedStop={selectedStop}
         selectedStopIndex={selectedStopIndex}
         selectedMapDayIndex={selectedMapDayIndex}
@@ -865,6 +891,15 @@ async function handleExport() {
         onNewTrip={handleNewChat}
         onExport={handleExport}
         onSelectStop={handleSelectStop}
+        onDropAlt={handleDrop}
+        onReorderStop={handleStopReorder}
+        showHistory={showHistory}
+        setShowHistory={setShowHistory}
+        savedSessions={savedSessions}
+        restoreSession={restoreSession}
+        deleteSession={deleteSession}
+        sessionId={sessionId}
+        approachSegment={approachSegment}
       />
     );
   }
@@ -1015,7 +1050,9 @@ async function handleExport() {
       </aside>
 
       {/* ── Col 2: Plan ── */}
-      <main className="col plan scroll">
+      <main className="col plan">
+        {/* Top zone: itinerary — vertical scroll, no horizontal overflow */}
+        <div className="plan-scroll scroll">
         <div className="plan-inner">
           {result ? (
             <>
@@ -1041,35 +1078,6 @@ async function handleExport() {
                   </button>
                 </div>
 
-                <p className="summary-lead">{result.itinerary.summary}</p>
-
-                <div className="meta-strip">
-                  <div className="meta">
-                    <div className="meta-val">{result.itinerary.stops.length}</div>
-                    <div className="meta-lbl">Stops</div>
-                  </div>
-                  <div className="meta">
-                    <div className="meta-val">
-                      {totalWalkMin}
-                      <span>min</span>
-                    </div>
-                    <div className="meta-lbl">Walking</div>
-                  </div>
-                  <div className="meta">
-                    <div className="meta-val">
-                      {uniqueSources.length}
-                      <span>sources</span>
-                    </div>
-                    <div className="meta-lbl">Sources</div>
-                  </div>
-                  <div className="meta">
-                    <div className="meta-val">
-                      {result.extracted_intent.duration_days}
-                      <span>days</span>
-                    </div>
-                    <div className="meta-lbl">Duration</div>
-                  </div>
-                </div>
               </section>
 
               <div className="tagrow">
@@ -1106,7 +1114,7 @@ async function handleExport() {
                           return (
                             <div
                               key={`${stop.name}-${stopIndex}`}
-                              className={`stop${isActive ? " active" : ""}${dragOver === dropKey ? " drag-over" : ""}${dragReorderOver === dropKey ? " drag-over-reorder" : ""}${draggingStop === dropKey ? " stop-dragging" : ""}`}
+                              className={`stop${isActive ? " active" : ""}${dragOver === dropKey ? " drag-over" : ""}${dragInvalid === dropKey ? " drag-invalid" : ""}${dragReorderOver === dropKey ? " drag-over-reorder" : ""}${draggingStop === dropKey ? " stop-dragging" : ""}`}
                               role="button"
                               tabIndex={0}
                               draggable
@@ -1130,14 +1138,27 @@ async function handleExport() {
                                 e.preventDefault();
                                 if (e.dataTransfer.types.includes("application/stop")) {
                                   setDragReorderOver(dropKey);
+                                  setDragOver(null);
+                                  setDragInvalid(null);
+                                } else if (draggingAlt) {
+                                  const valid = canDropAlternative(draggingAlt, dayIndex, stopIndex);
+                                  setDragOver(valid ? dropKey : null);
+                                  setDragInvalid(valid ? null : dropKey);
+                                  setDragReorderOver(null);
                                 } else {
                                   setDragOver(dropKey);
+                                  setDragInvalid(null);
                                 }
                               }}
-                              onDragLeave={() => { setDragOver(null); setDragReorderOver(null); }}
+                              onDragLeave={() => {
+                                setDragOver(null);
+                                setDragInvalid(null);
+                                setDragReorderOver(null);
+                              }}
                               onDrop={(e) => {
                                 e.preventDefault();
                                 setDragOver(null);
+                                setDragInvalid(null);
                                 setDragReorderOver(null);
                                 setDraggingStop(null);
                                 const stopData = e.dataTransfer.getData("application/stop");
@@ -1149,7 +1170,9 @@ async function handleExport() {
                                 } else {
                                   try {
                                     const alt: AlternativePlace = JSON.parse(e.dataTransfer.getData("text/plain"));
-                                    handleDrop(alt, dayIndex, stopIndex);
+                                    if (canDropAlternative(alt, dayIndex, stopIndex)) {
+                                      handleDrop(alt, dayIndex, stopIndex);
+                                    }
                                   } catch {}
                                 }
                               }}
@@ -1231,46 +1254,6 @@ async function handleExport() {
                 })}
               </div>
 
-              {planAlts.length > 0 && (
-                <section className="alts">
-                  <div className="alts-head">
-                    <h3>Alternative places</h3>
-                    <span className="hint">Drag cards to swap · drag ⠿ handle to reorder</span>
-                  </div>
-                  <div className="alts-grid">
-                    {planAlts.slice(0, 4).map((alt, idx) => (
-                      <div
-                        className="alt"
-                        key={`${alt.name}-${alt.city}-${idx}`}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData("text/plain", JSON.stringify(alt));
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                      >
-                          <PlacePhoto
-                            photoName={alt.photo_name}
-                            sourceUrl={alt.source_url}
-                            latitude={alt.latitude}
-                            longitude={alt.longitude}
-                            alt={alt.name}
-                            className="alt-img alt-drag-handle"
-                          />
-                        <span className="alt-body">
-                          <span className={`cat-chip${isMuseumCategory(alt.category) ? " museum" : ""}`}>
-                            {displayCategory(alt.category)}
-                          </span>
-                          <span className="alt-name">{alt.name}</span>
-                          {alt.reason && <span className="alt-reason">{alt.reason}</span>}
-                        </span>
-                        <span className="drag-hint">
-                          ↕ drag
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
             </>
           ) : (
             <div className="plan-empty">
@@ -1280,6 +1263,81 @@ async function handleExport() {
             </div>
           )}
         </div>
+        </div>
+
+        {/* Bottom zone: alternatives — independent horizontal scroll */}
+        {result && planAlts.length > 0 && (
+          <div className="plan-alts-pane scroll">
+            <section className="alts">
+              <div className="alts-head">
+                <h3>Alternative places</h3>
+                <span className="hint">Drag cards onto a stop to swap</span>
+              </div>
+              <div className="alts-grid">
+                {sortedAlts.slice(0, 4).map((alt, idx) => {
+                  const recForSelected = alt.recommended_for?.find(
+                    (r) => r.day_index === selectedMapDayIndex && r.stop_index === selectedStopIndex
+                  );
+                  const isCompatible = !alt.recommended_for || alt.recommended_for.length === 0 || !!recForSelected;
+                  return (
+                    <div
+                      className={`alt${isCompatible ? "" : " alt-incompatible"}`}
+                      key={`${alt.name}-${alt.city}-${idx}`}
+                      draggable
+                      title={
+                        !isCompatible
+                          ? "Not compatible with the selected stop — try dragging to another stop"
+                          : recForSelected
+                          ? `Replacement score: ${Math.round(recForSelected.replacement_score * 100)}%${recForSelected.route_delta_minutes > 0 ? ` · +${recForSelected.route_delta_minutes.toFixed(0)} min` : recForSelected.route_delta_minutes < 0 ? ` · saves ${Math.abs(recForSelected.route_delta_minutes).toFixed(0)} min` : ""}`
+                          : "Drag to replace a stop"
+                      }
+                      onDragStart={(e) => {
+                        setDraggingAlt(alt);
+                        e.dataTransfer.setData("text/plain", JSON.stringify(alt));
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragEnd={() => {
+                        setDraggingAlt(null);
+                        setDragOver(null);
+                        setDragInvalid(null);
+                      }}
+                    >
+                      <PlacePhoto
+                        photoName={alt.photo_name}
+                        sourceUrl={alt.source_url}
+                        latitude={alt.latitude}
+                        longitude={alt.longitude}
+                        alt={alt.name}
+                        className="alt-img alt-drag-handle"
+                      />
+                      <span className="alt-body">
+                        <span className="alt-meta-row">
+                          <span className={`cat-chip${isMuseumCategory(alt.category) ? " museum" : ""}`}>
+                            {displayCategory(alt.category)}
+                          </span>
+                          {recForSelected && (
+                            <span className="alt-score-badge">
+                              {Math.round(recForSelected.replacement_score * 100)}%
+                            </span>
+                          )}
+                        </span>
+                        <span className="alt-name">{alt.name}</span>
+                        {recForSelected && recForSelected.route_delta_minutes > 0 && (
+                          <span className="alt-route-delta">+{recForSelected.route_delta_minutes.toFixed(0)} min route</span>
+                        )}
+                        {recForSelected && recForSelected.route_delta_minutes < -1 && (
+                          <span className="alt-route-delta alt-route-better">saves {Math.abs(recForSelected.route_delta_minutes).toFixed(0)} min</span>
+                        )}
+                        {!isCompatible && <span className="alt-incompat-hint">Select a compatible stop</span>}
+                      </span>
+                      <span className="drag-hint">↕ drag</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        )}
       </main>
 
       {/* ── Col 3: Map ── */}
@@ -1505,6 +1563,7 @@ type MobileAppProps = {
   result: ChatResponse | null;
   planDays: DaySection[];
   planAlts: AlternativePlace[];
+  sortedAlts: AlternativePlace[];
   selectedStop: Place | null;
   selectedStopIndex: number;
   selectedMapDayIndex: number;
@@ -1524,6 +1583,15 @@ type MobileAppProps = {
   onNewTrip: () => void;
   onExport: () => Promise<void>;
   onSelectStop: (dayIndex: number, stopIndex: number) => void;
+  onDropAlt: (alt: AlternativePlace, dayIndex: number, stopIndex: number) => void;
+  onReorderStop: (fromDay: number, fromStop: number, toDay: number, toStop: number) => void;
+  showHistory: boolean;
+  setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
+  savedSessions: SavedSession[];
+  restoreSession: (sess: SavedSession) => void;
+  deleteSession: (id: string, e: React.MouseEvent) => void;
+  sessionId: string | null;
+  approachSegment: RouteSegment | null;
 };
 
 function MobileApp({
@@ -1536,6 +1604,7 @@ function MobileApp({
   result,
   planDays,
   planAlts,
+  sortedAlts,
   selectedStop,
   selectedStopIndex,
   selectedMapDayIndex,
@@ -1555,19 +1624,176 @@ function MobileApp({
   onNewTrip,
   onExport,
   onSelectStop,
+  onDropAlt,
+  onReorderStop,
+  showHistory,
+  setShowHistory,
+  savedSessions,
+  restoreSession,
+  deleteSession,
+  sessionId,
+  approachSegment,
 }: MobileAppProps) {
   const sheetRef = useRef<HTMLElement | null>(null);
-  const dragStateRef = useRef<{ startY: number; startOffset: number; pointerId: number | null }>({
+  const sheetInnerRef = useRef<HTMLDivElement | null>(null);
+  const innerDragRef = useRef(false);
+  const dragStateRef = useRef<{ startY: number; startOffset: number; pointerId: number | null; lastY: number; lastTime: number }>({
     startY: 0,
     startOffset: 0,
     pointerId: null,
+    lastY: 0,
+    lastTime: 0,
   });
   const [sheetOffsets, setSheetOffsets] = useState({ collapsed: 0, half: 0, expanded: 0 });
-  const [sheetSnap, setSheetSnap] = useState<"collapsed" | "half" | "expanded">("half");
+  const [sheetSnap, setSheetSnap] = useState<"collapsed" | "half" | "expanded">("expanded");
   const [sheetOffset, setSheetOffset] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const [compactPrompt, setCompactPrompt] = useState(false);
   const hasSubmittedPrompt = messages.some((msg) => msg.role === "user") || Boolean(result);
+
+  // Touch drag-and-drop state for alternatives
+  const [touchDragAlt, setTouchDragAlt] = useState<AlternativePlace | null>(null);
+  const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null);
+  const [touchDropKey, setTouchDropKey] = useState<string | null>(null);
+  const [touchDropInvalidKey, setTouchDropInvalidKey] = useState<string | null>(null);
+
+  // Touch drag-to-reorder state
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reorderStartRef = useRef<{ x: number; y: number; dayIndex: number; stopIndex: number; name: string } | null>(null);
+  const touchWasScrollRef = useRef(false);
+  const [touchReorderDrag, setTouchReorderDrag] = useState<{ dayIndex: number; stopIndex: number; ghostPos: { x: number; y: number }; name: string } | null>(null);
+  const [touchReorderOver, setTouchReorderOver] = useState<{ dayIndex: number; stopIndex: number } | null>(null);
+
+  function handleStopTouchStart(dayIndex: number, stopIndex: number, name: string, e: React.TouchEvent) {
+    if (touchDragAlt) return; // alt drag takes priority
+    touchWasScrollRef.current = false;
+    const t = e.touches[0];
+    reorderStartRef.current = { x: t.clientX, y: t.clientY, dayIndex, stopIndex, name };
+    longPressTimerRef.current = setTimeout(() => {
+      if (!reorderStartRef.current) return;
+      const { x, y } = reorderStartRef.current;
+      setTouchReorderDrag({ dayIndex, stopIndex, ghostPos: { x, y }, name });
+      navigator.vibrate?.(50);
+    }, 480);
+  }
+
+  function handleStopTouchMove(e: React.TouchEvent) {
+    const t = e.touches[0];
+    const start = reorderStartRef.current;
+
+    // If long-press hasn't fired yet and finger moved → cancel (it's a scroll)
+    if (longPressTimerRef.current && start) {
+      const dx = Math.abs(t.clientX - start.x);
+      const dy = Math.abs(t.clientY - start.y);
+      if (dx > 8 || dy > 8) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+        reorderStartRef.current = null;
+        touchWasScrollRef.current = true;
+      }
+      return;
+    }
+
+    if (!touchReorderDrag) return;
+    e.preventDefault();
+    setTouchReorderDrag((prev) => prev ? { ...prev, ghostPos: { x: t.clientX, y: t.clientY } } : null);
+
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const card = (el as HTMLElement)?.closest("[data-drop-key]") as HTMLElement | null;
+    if (card) {
+      const di = parseInt(card.dataset.dayIndex ?? "-1");
+      const si = parseInt(card.dataset.stopIndex ?? "-1");
+      // Only allow reorder within the same day
+      if (di === touchReorderDrag.dayIndex && si >= 0 && si !== touchReorderDrag.stopIndex) {
+        setTouchReorderOver({ dayIndex: di, stopIndex: si });
+        return;
+      }
+    }
+    setTouchReorderOver(null);
+  }
+
+  function handleStopTouchEnd(dayIndex: number, stopIndex: number, e: React.TouchEvent) {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    reorderStartRef.current = null;
+
+    if (touchReorderDrag) {
+      e.preventDefault();
+      if (touchReorderOver && touchReorderOver.dayIndex === touchReorderDrag.dayIndex) {
+        onReorderStop(touchReorderDrag.dayIndex, touchReorderDrag.stopIndex, touchReorderOver.dayIndex, touchReorderOver.stopIndex);
+      }
+      setTouchReorderDrag(null);
+      setTouchReorderOver(null);
+    } else if (!touchWasScrollRef.current) {
+      // Clean tap (no scroll movement) — navigate to map
+      e.preventDefault();
+      onSelectStop(dayIndex, stopIndex);
+      setMobileTab("Map");
+    }
+    touchWasScrollRef.current = false;
+  }
+
+  function canDropMobileAlt(alt: AlternativePlace, dayIndex: number, stopIndex: number): boolean {
+    if (!alt.recommended_for || alt.recommended_for.length === 0) return true;
+    return alt.recommended_for.some(
+      (r) => r.day_index === dayIndex && r.stop_index === stopIndex && r.replacement_score >= 0.25
+    );
+  }
+
+  function resolveStopUnderFinger(x: number, y: number): { dayIndex: number; stopIndex: number } | null {
+    const el = document.elementFromPoint(x, y);
+    const card = (el as HTMLElement)?.closest("[data-drop-key]") as HTMLElement | null;
+    if (!card) return null;
+    const dayIndex = parseInt(card.dataset.dayIndex ?? "-1");
+    const stopIndex = parseInt(card.dataset.stopIndex ?? "-1");
+    return dayIndex >= 0 && stopIndex >= 0 ? { dayIndex, stopIndex } : null;
+  }
+
+  function handleAltTouchStart(alt: AlternativePlace, e: React.TouchEvent) {
+    e.preventDefault();
+    const t = e.touches[0];
+    setTouchDragAlt(alt);
+    setGhostPos({ x: t.clientX, y: t.clientY });
+    setTouchDropKey(null);
+    setTouchDropInvalidKey(null);
+  }
+
+  function handleAltTouchMove(e: React.TouchEvent) {
+    if (!touchDragAlt) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    setGhostPos({ x: t.clientX, y: t.clientY });
+    const target = resolveStopUnderFinger(t.clientX, t.clientY);
+    if (target) {
+      const key = `${target.dayIndex}-${target.stopIndex}`;
+      if (canDropMobileAlt(touchDragAlt, target.dayIndex, target.stopIndex)) {
+        setTouchDropKey(key);
+        setTouchDropInvalidKey(null);
+      } else {
+        setTouchDropKey(null);
+        setTouchDropInvalidKey(key);
+      }
+    } else {
+      setTouchDropKey(null);
+      setTouchDropInvalidKey(null);
+    }
+  }
+
+  function handleAltTouchEnd(e: React.TouchEvent) {
+    if (!touchDragAlt) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const target = resolveStopUnderFinger(t.clientX, t.clientY);
+    if (target && canDropMobileAlt(touchDragAlt, target.dayIndex, target.stopIndex)) {
+      onDropAlt(touchDragAlt, target.dayIndex, target.stopIndex);
+    }
+    setTouchDragAlt(null);
+    setGhostPos(null);
+    setTouchDropKey(null);
+    setTouchDropInvalidKey(null);
+  }
 
   const navItems: Array<{ tab: MobileTab; label: string; icon: typeof MapPin }> = [
     { tab: "Plan", label: "Plan", icon: PanelTop },
@@ -1601,16 +1827,110 @@ function MobileApp({
     }
   }, [hasSubmittedPrompt]);
 
+  // Scroll sheet inner to top whenever the tab changes
+  useEffect(() => {
+    sheetInnerRef.current?.scrollTo({ top: 0 });
+  }, [mobileTab]);
+
+  // Scroll to top when a new result arrives
+  useEffect(() => {
+    if (result) {
+      sheetInnerRef.current?.scrollTo({ top: 0 });
+    }
+  }, [result]);
+
+  // Non-passive touch listener: drag sheet down when inner scroll is at top
+  useEffect(() => {
+    const el = sheetInnerRef.current;
+    if (!el) return;
+
+    let startY = 0;
+    let startScrollTop = 0;
+    let startOffset = 0;
+
+    function onTouchStart(e: TouchEvent) {
+      innerDragRef.current = false;
+      startY = e.touches[0].clientY;
+      startScrollTop = el!.scrollTop;
+      startOffset = sheetOffset;
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      const dy = e.touches[0].clientY - startY;
+      if (!innerDragRef.current && startScrollTop === 0 && dy > 8) {
+        innerDragRef.current = true;
+        dragStateRef.current = {
+          startY,
+          startOffset,
+          pointerId: null,
+          lastY: e.touches[0].clientY,
+          lastTime: Date.now(),
+        };
+        setSheetDragging(true);
+      }
+      if (innerDragRef.current) {
+        e.preventDefault();
+        const delta = e.touches[0].clientY - dragStateRef.current.startY;
+        const next = Math.min(
+          sheetOffsets.collapsed,
+          Math.max(sheetOffsets.expanded, dragStateRef.current.startOffset + delta)
+        );
+        setSheetOffset(next);
+        dragStateRef.current.lastY = e.touches[0].clientY;
+        dragStateRef.current.lastTime = Date.now();
+      }
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+      if (!innerDragRef.current) return;
+      innerDragRef.current = false;
+      setSheetDragging(false);
+      const dt = Date.now() - dragStateRef.current.lastTime;
+      const dy = e.changedTouches[0].clientY - dragStateRef.current.lastY;
+      const vel = dt > 0 ? dy / dt : 0;
+      const candidates = [
+        { snap: "expanded" as const, offset: sheetOffsets.expanded },
+        { snap: "half" as const, offset: sheetOffsets.half },
+        { snap: "collapsed" as const, offset: sheetOffsets.collapsed },
+      ];
+      if (vel > 0.4) {
+        setSheetSnap(sheetOffset < sheetOffsets.half * 0.5 ? "half" : "collapsed");
+        setSheetOffset(sheetOffset < sheetOffsets.half * 0.5 ? sheetOffsets.half : sheetOffsets.collapsed);
+      } else if (vel < -0.4) {
+        setSheetSnap("expanded");
+        setSheetOffset(sheetOffsets.expanded);
+      } else {
+        const nearest = candidates.reduce((a, b) =>
+          Math.abs(a.offset - sheetOffset) < Math.abs(b.offset - sheetOffset) ? a : b
+        );
+        setSheetSnap(nearest.snap);
+        setSheetOffset(nearest.offset);
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [sheetOffsets, sheetOffset]);
+
   const snapToSheet = (nextSnap: "collapsed" | "half" | "expanded") => {
     setSheetSnap(nextSnap);
     setSheetOffset(sheetOffsets[nextSnap]);
   };
 
   const handleSheetPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const now = Date.now();
     dragStateRef.current = {
       startY: event.clientY,
       startOffset: sheetOffset,
       pointerId: event.pointerId,
+      lastY: event.clientY,
+      lastTime: now,
     };
     setSheetDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -1624,6 +1944,8 @@ function MobileApp({
       Math.max(sheetOffsets.expanded, dragStateRef.current.startOffset + delta)
     );
     setSheetOffset(nextOffset);
+    dragStateRef.current.lastY = event.clientY;
+    dragStateRef.current.lastTime = Date.now();
   };
 
   const handleSheetPointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -1631,6 +1953,24 @@ function MobileApp({
     event.currentTarget.releasePointerCapture(event.pointerId);
     dragStateRef.current.pointerId = null;
     setSheetDragging(false);
+
+    // Velocity-based snapping — a quick flick overrides proximity
+    const dt = Date.now() - dragStateRef.current.lastTime;
+    const dy = event.clientY - dragStateRef.current.lastY;
+    const velocity = dt > 0 ? dy / dt : 0; // px/ms, positive = downward
+
+    if (velocity > 0.4) {
+      // Fast flick downward → collapse (or half if already near expanded)
+      snapToSheet(sheetOffset < sheetOffsets.half * 0.5 ? "half" : "collapsed");
+      return;
+    }
+    if (velocity < -0.4) {
+      // Fast flick upward → expand
+      snapToSheet("expanded");
+      return;
+    }
+
+    // Slow drag → snap to nearest position
     const candidates = [
       { snap: "expanded" as const, offset: sheetOffsets.expanded },
       { snap: "half" as const, offset: sheetOffsets.half },
@@ -1650,6 +1990,26 @@ function MobileApp({
 
   return (
     <div className="mobile-app">
+      {ghostPos && touchDragAlt && (
+        <div
+          className="mobile-drag-ghost"
+          style={{ left: ghostPos.x - 70, top: ghostPos.y - 36 }}
+        >
+          <span className={`cat-chip${isMuseumCategory(touchDragAlt.category) ? " museum" : ""}`}>
+            {displayCategory(touchDragAlt.category)}
+          </span>
+          <span className="mobile-drag-ghost-name">{touchDragAlt.name}</span>
+        </div>
+      )}
+      {touchReorderDrag && (
+        <div
+          className="mobile-drag-ghost mobile-reorder-ghost"
+          style={{ left: touchReorderDrag.ghostPos.x - 70, top: touchReorderDrag.ghostPos.y - 22 }}
+        >
+          <span className="mobile-drag-ghost-name">{touchReorderDrag.name}</span>
+          <span style={{ fontSize: 9.5, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>↕ reorder</span>
+        </div>
+      )}
       <div className="mobile-map-stage">
         <GoogleMap
           stops={activeMapStops}
@@ -1660,14 +2020,53 @@ function MobileApp({
       </div>
 
       <header className="mobile-brand-card">
-        <div className="brand">
-          <span className="brand-mark" />
-          <div>
-            <div className="brand-name">TravelBuddy</div>
-            <div className="mobile-brand-sub">France</div>
+        <button className="mobile-brand-btn" onClick={() => setShowHistory((v) => !v)}>
+          TravelBuddy
+          <div className="mobile-brand-tricolore">
+            <i /><i /><i />
           </div>
-        </div>
+        </button>
       </header>
+
+      {showHistory && (
+        <div className="history-panel scroll" style={{ position: "relative", zIndex: 10, maxHeight: 200 }}>
+          <div className="hist-head">
+            <span className="eyebrow">Recent sessions</span>
+            <button className="icon-btn" style={{ height: 26, padding: "0 8px" }} onClick={() => setShowHistory(false)}>
+              <X size={12} />
+            </button>
+          </div>
+          {savedSessions.length === 0 ? (
+            <div className="hist-empty">No saved sessions yet</div>
+          ) : (
+            savedSessions.map((sess) => (
+              <button
+                key={sess.id}
+                className={`hist-session${sess.id === sessionId ? " active" : ""}`}
+                type="button"
+                onClick={() => { restoreSession(sess); setShowHistory(false); }}
+              >
+                <span className="hist-title">{sess.title}</span>
+                <span className="hist-meta">
+                  {new Date(sess.timestamp).toLocaleDateString("en-GB", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                  {" · "}
+                  {sess.planDays.reduce((n, d) => n + d.stops.length, 0)} stops
+                </span>
+                <button
+                  className="hist-del"
+                  type="button"
+                  onClick={(e) => deleteSession(sess.id, e)}
+                  title="Delete"
+                >
+                  <X size={10} />
+                </button>
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       <section
         ref={sheetRef}
@@ -1683,7 +2082,7 @@ function MobileApp({
         >
           <div className="mobile-sheet-handle" />
         </div>
-        <div className="mobile-sheet-inner scroll" ref={mobileTab === "Plan" ? feedRef : undefined}>
+        <div className="mobile-sheet-inner scroll" ref={(el) => { sheetInnerRef.current = el; if (mobileTab === "Plan") feedRef.current = el; }}>
           {mobileTab === "Plan" && (
             <div className="mobile-pane">
               <div className="eyebrow" style={{ marginBottom: 12 }}>Plan</div>
@@ -1699,6 +2098,30 @@ function MobileApp({
                   </div>
                   <div className={`mobile-bubble ${msg.role === "user" ? "user" : "ai"}`}>
                     {msg.content}
+                    {"response" in msg && msg.response && (
+                      <>
+                        <div className="src-row">
+                          {[
+                            ...new Set(
+                              msg.response.itinerary.stops
+                                .map((s) => s.source_type)
+                                .filter((t) => SRC_LABEL[t])
+                            ),
+                          ].map((type) => (
+                            <span className="src-chip" key={type}>
+                              <span className="src-dot" style={{ background: SRC_COLOR[type] }} />
+                              {displaySourceLabel(type)}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="ai-action">
+                          <Sparkles size={13} />
+                          {msg.response.itinerary.stops.length} stops ·{" "}
+                          {msg.response.extracted_intent.duration_days} days ·{" "}
+                          {msg.response.extracted_intent.pace || "mixed"} pace
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1740,11 +2163,6 @@ function MobileApp({
                   <div className="eyebrow">Itinerary</div>
                   <h2>{result.extracted_intent.destination}</h2>
                   <p>{result.assistant_message}</p>
-                  <div className="mobile-stat-row">
-                    <span>{result.itinerary.stops.length} stops</span>
-                    <span>{result.extracted_intent.duration_days} days</span>
-                    <span>{totalWalkMin} min walk</span>
-                  </div>
                   <button
                     className="export-btn mobile-export-btn"
                     type="button"
@@ -1756,6 +2174,23 @@ function MobileApp({
                   </button>
                 </div>
 
+                {(result.itinerary.themes?.length > 0 || result.extracted_intent.avoid?.length > 0) && (
+                  <div className="tagrow" style={{ margin: "10px 0 0" }}>
+                    {result.itinerary.themes?.map((t) => (
+                      <span className="tag" key={t}>
+                        <span className="tdot" />
+                        {t}
+                      </span>
+                    ))}
+                    {result.extracted_intent.avoid?.map((a) => (
+                      <span className="tag neg" key={a}>
+                        <span className="tdot" />
+                        Avoid {a}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mobile-source-row">
                   {uniqueSources.map((type) => (
                     <span className="src-chip" key={type}>
@@ -1765,7 +2200,9 @@ function MobileApp({
                   ))}
                 </div>
 
-                {planDays.map((day, dayIndex) => (
+                {planDays.map((day, dayIndex) => {
+                  const daySegments = buildSegments(day.stops);
+                  return (
                   <section className="mobile-day-card" key={`${day.day}-${day.title}`}>
                     <div className="mobile-day-head">
                       <span className="day-no">Day {day.day}</span>
@@ -1775,16 +2212,25 @@ function MobileApp({
                       </div>
                     </div>
                     <div className="mobile-stop-list">
-                      {day.stops.map((stop, stopIndex) => (
+                      {day.stops.map((stop, stopIndex) => {
+                        const dropKey = `${dayIndex}-${stopIndex}`;
+                        const isTouchDropOver = touchDropKey === dropKey;
+                        const isTouchDropInvalid = touchDropInvalidKey === dropKey;
+                        const isReorderOver = touchReorderOver?.dayIndex === dayIndex && touchReorderOver?.stopIndex === stopIndex;
+                        const isReorderSource = touchReorderDrag?.dayIndex === dayIndex && touchReorderDrag?.stopIndex === stopIndex;
+                        return (
                         <button
                           key={`${stop.name}-${stopIndex}`}
-                          className="mobile-stop-card"
+                          className={`mobile-stop-card${isTouchDropOver ? " drag-over" : ""}${isTouchDropInvalid ? " drag-invalid" : ""}${isReorderOver ? " drag-over-reorder" : ""}${isReorderSource ? " stop-dragging" : ""}`}
                           type="button"
-                          onClick={() => {
-                            onSelectStop(dayIndex, stopIndex);
-                            setMobileTab("Map");
-                          }}
+                          data-drop-key={dropKey}
+                          data-day-index={dayIndex}
+                          data-stop-index={stopIndex}
+                          onTouchStart={(e) => handleStopTouchStart(dayIndex, stopIndex, stop.name, e)}
+                          onTouchMove={handleStopTouchMove}
+                          onTouchEnd={(e) => handleStopTouchEnd(dayIndex, stopIndex, e)}
                         >
+                          <span className="stop-num">{stopIndex + 1}</span>
                           <PlacePhoto
                             photoName={stop.photo_name}
                             sourceUrl={stop.source_url}
@@ -1800,45 +2246,107 @@ function MobileApp({
                             </span>
                             <span className="mobile-stop-name">{stop.name}</span>
                             <span className="mobile-stop-meta">
-                              {stop.google_rating ? (
-                                <>
+                              {stop.google_rating && (
+                                <span className="mini">
                                   <Stars rating={stop.google_rating} />
-                                  {stop.google_rating.toFixed(1)}
-                                </>
+                                  <span className="rating-num">{stop.google_rating.toFixed(1)}</span>
+                                </span>
+                              )}
+                              {stop.open_status_label && (
+                                <span className="mini">
+                                  <Clock size={12} />
+                                  {stop.open_status_label.split(" ").slice(0, 3).join(" ")}
+                                </span>
+                              )}
+                              {stop.source_url ? (
+                                <a
+                                  className="src-link"
+                                  href={stop.source_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ color: SRC_COLOR[stop.source_type] ?? "var(--ink-3)" }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink size={11} />
+                                  {displaySourceLabel(stop.source_type)}
+                                </a>
                               ) : (
-                                stop.local_tip || stop.reason
+                                <span className="src-link" style={{ color: SRC_COLOR[stop.source_type] ?? "var(--ink-3)" }}>
+                                  <ExternalLink size={11} />
+                                  {displaySourceLabel(stop.source_type)}
+                                </span>
                               )}
                             </span>
                           </div>
-                          <ChevronRight size={16} className="chev" />
+                          <span className="stop-right">
+                            {daySegments[stopIndex] ? (
+                              <span className="walkpill">
+                                {daySegments[stopIndex].mode === "Walk" ? <Footprints size={11} /> : <Bus size={11} />}
+                                {daySegments[stopIndex].minutes} min
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+                            <span className="chev"><ChevronRight size={15} /></span>
+                          </span>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
-                ))}
+                  ); })}
 
-                {planAlts.length > 0 && (
+
+                {sortedAlts.length > 0 && (
                   <section className="mobile-day-card">
                     <div className="mobile-day-title" style={{ marginBottom: 12 }}>Alternative places</div>
                     <div className="mobile-alt-grid">
-                      {planAlts.slice(0, 4).map((alt, idx) => (
-                        <div className="alt" key={`${alt.name}-${idx}`}>
-                          <PlacePhoto
-                            photoName={alt.photo_name}
-                            sourceUrl={alt.source_url}
-                            latitude={alt.latitude}
-                            longitude={alt.longitude}
-                            alt={alt.name}
-                            className="alt-img"
-                          />
-                          <span className="alt-body">
-                            <span className={`cat-chip${isMuseumCategory(alt.category) ? " museum" : ""}`}>
-                              {displayCategory(alt.category)}
+                      {sortedAlts.slice(0, 4).map((alt, idx) => {
+                        const recForSelected = alt.recommended_for?.find(
+                          (r) => r.day_index === selectedMapDayIndex && r.stop_index === selectedStopIndex
+                        );
+                        const isCompatible = !alt.recommended_for || alt.recommended_for.length === 0 || !!recForSelected;
+                        const isBeingDragged = touchDragAlt?.name === alt.name;
+                        return (
+                          <div
+                            className={`alt${isCompatible ? "" : " alt-incompatible"}${isBeingDragged ? " alt-being-dragged" : ""}`}
+                            key={`${alt.name}-${idx}`}
+                            onTouchStart={(e) => handleAltTouchStart(alt, e)}
+                            onTouchMove={handleAltTouchMove}
+                            onTouchEnd={handleAltTouchEnd}
+                          >
+                            <PlacePhoto
+                              photoName={alt.photo_name}
+                              sourceUrl={alt.source_url}
+                              latitude={alt.latitude}
+                              longitude={alt.longitude}
+                              alt={alt.name}
+                              className="alt-img"
+                            />
+                            <span className="alt-body">
+                              <span className="alt-meta-row">
+                                <span className={`cat-chip${isMuseumCategory(alt.category) ? " museum" : ""}`}>
+                                  {displayCategory(alt.category)}
+                                </span>
+                                {recForSelected && (
+                                  <span className="alt-score-badge">
+                                    {Math.round(recForSelected.replacement_score * 100)}%
+                                  </span>
+                                )}
+                              </span>
+                              <span className="alt-name">{alt.name}</span>
+                              {recForSelected && recForSelected.route_delta_minutes > 0 && (
+                                <span className="alt-route-delta">+{recForSelected.route_delta_minutes.toFixed(0)} min route</span>
+                              )}
+                              {recForSelected && recForSelected.route_delta_minutes < -1 && (
+                                <span className="alt-route-delta alt-route-better">saves {Math.abs(recForSelected.route_delta_minutes).toFixed(0)} min</span>
+                              )}
+                              {!isCompatible && <span className="alt-incompat-hint">Tap another stop first</span>}
+                              {isCompatible && <span className="alt-incompat-hint">Hold & drag onto a stop</span>}
                             </span>
-                            <span className="alt-name">{alt.name}</span>
-                          </span>
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
                 )}
@@ -1932,6 +2440,44 @@ function MobileApp({
                   </div>
                 </div>
 
+                <div className="legs" style={{ margin: "0 0 12px" }}>
+                  {(segments.length > 0 || approachSegment) && (
+                    <>
+                      <div className="legs-head">
+                        <span className="eyebrow">Between stops</span>
+                      </div>
+                      {approachSegment && (
+                        <div className="leg">
+                          <span className="leg-route">
+                            <span className="leg-no">S</span>
+                            <span className="leg-arrow"><ArrowRight size={11} /></span>
+                            <span className="leg-no">1</span>
+                          </span>
+                          <span className="leg-mode">
+                            {approachSegment.mode === "Walk" ? <Footprints size={13} /> : <Bus size={13} />}
+                            {approachSegment.mode === "Walk" ? "Walk" : "Metro + walk"}
+                          </span>
+                          <span className="leg-time">{approachSegment.minutes}<span> min</span></span>
+                        </div>
+                      )}
+                      {segments.map((seg, i) => (
+                        <div key={`${seg.from.name}-${seg.to.name}`} className={`leg${i === selectedStopIndex ? " hl" : ""}`}>
+                          <span className="leg-route">
+                            <span className="leg-no">{i + 1}</span>
+                            <span className="leg-arrow"><ArrowRight size={11} /></span>
+                            <span className="leg-no">{i + 2}</span>
+                          </span>
+                          <span className="leg-mode">
+                            {seg.mode === "Walk" ? <Footprints size={13} /> : <Bus size={13} />}
+                            {seg.mode === "Walk" ? "Walk" : "Metro + walk"}
+                          </span>
+                          <span className="leg-time">{seg.minutes}<span> min</span></span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+
                 <div className="mobile-selector-list">
                   {activeMapStops.map((stop, stopIndex) => (
                     <button
@@ -1970,13 +2516,12 @@ function MobileApp({
             type="button"
             onClick={() => setMobileTab(tab)}
           >
-            <Icon size={20} />
+            <Icon size={22} />
             <span>{label}</span>
           </button>
         ))}
-        <button className="mobile-nav-btn" type="button" onClick={onNewTrip}>
-          <Plus size={20} />
-          <span>New Trip</span>
+        <button className="mobile-nav-fab" type="button" onClick={onNewTrip} aria-label="New Trip">
+          <Plus size={22} />
         </button>
       </nav>
     </div>

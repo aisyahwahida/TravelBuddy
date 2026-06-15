@@ -32,6 +32,13 @@ export type Place = {
   wiki_thumb_url?: string;
 };
 
+export type RecommendedForItem = {
+  day_index: number;
+  stop_index: number;
+  replacement_score: number;
+  route_delta_minutes: number;
+};
+
 export type AlternativePlace = {
   name: string;
   category: string;
@@ -43,6 +50,12 @@ export type AlternativePlace = {
   latitude: number;
   longitude: number;
   photo_name: string;
+  // Contextual alternative fields (present on new-format alternatives)
+  compatible_slot_types?: string[];
+  recommended_for?: RecommendedForItem[];
+  replacement_score?: number;
+  route_delta_minutes?: number;
+  distance_from_day_center_km?: number;
 };
 
 export type TravelIntent = {

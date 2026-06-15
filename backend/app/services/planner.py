@@ -707,10 +707,18 @@ def _replace_underfilled_days_from_unused(
 
 
 def _ensure_day_count(days: list[ItineraryDay], day_count: int) -> list[ItineraryDay]:
-    """Keep the requested trip length visible even when the candidate pool is small."""
-    if len(days) >= day_count:
+    """Keep the exact requested trip length — trim excess days, pad if short."""
+    # Trim: strip any extra days the planner may have emitted
+    if len(days) > day_count:
+        return [
+            day.model_copy(update={"day": index + 1})
+            for index, day in enumerate(days[:day_count])
+        ]
+
+    if len(days) == day_count:
         return days
 
+    # Pad: add placeholder days when the candidate pool is too small
     balanced = list(days)
     while len(balanced) < day_count:
         donor = max(balanced, key=lambda day: len(day.stops), default=None)
